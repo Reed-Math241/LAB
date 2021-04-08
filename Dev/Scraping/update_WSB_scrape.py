@@ -4,9 +4,9 @@ import json
 import time
 
 
-old = pd.read_csv("data/raw_wsb_dd_submissions.csv")
+old = pd.read_csv("Data\raw-historical\2020_raw_wsb_dd_submissions.csv")
 
-stop_q_time_at = max(old[""]) #minimum query time, January 1, 2018 12:00:00 AM
+stop_q_time_at = max(old["created_utc"]) #minimum query time, previous max
 
 
 ### Below is identical to previous
@@ -44,5 +44,6 @@ sub_data = sub_data.loc[sub_data['link_flair_text'] == "DD"] # Only DD
 sub_data = sub_data[['title', 'selftext', 'author', 'created_utc', 'upvote_ratio', 'score', "num_comments", "all_awardings", 'permalink']] #reorder cols
 ###
 
+sub_data = pd.concat([sub_data, old], ignore_index=True)
 
-sub_data.to_csv("data/raw_wsb_dd_submissions.csv", index=False)
+sub_data.to_csv("Data\raw-historical\test_update.csv", index=False)
