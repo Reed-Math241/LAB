@@ -23,7 +23,6 @@ def getPushshiftData(sub, before, filters):
     r = requests.get(url)
     if r.status_code!=200: #if error
       print("Error code: ", r.status_code) #print code
-       
       print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(q_time))) #prints query time stuck
       time.sleep(25) #pauses for 8.5 seconds to avoid error 429
       return getPushshiftData(sub, before, filters) #trys again

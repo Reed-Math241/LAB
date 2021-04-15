@@ -2,7 +2,7 @@ library(tidyverse)
 
 path = "data/raw-historical"
 
-files_listed <- list.files("data/raw-historical")
+files_listed <- list.files(path)
 
 print(files_listed)
 
