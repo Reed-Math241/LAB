@@ -20,10 +20,19 @@ require(quantmod)
 
 ```{r}
 nyse_tickers <- read_csv("Dev/data-prep/nyse_tickers.csv")
-View(nyse_tickers)
-
 wsb_dd_submissions <- read_csv("WSB-viz/www/wsb_dd_submissions.csv")
 View(wsb_dd_submissions)
+```
+
+```{r}
+nyse_select <- data.frame(str_subset(nyse_tickers$Name, " Common Stock"))
+
+nyse_common <- nyse_tickers %>% 
+  inner_join(nyse_select, by = c("Name"="str_subset.nyse_tickers.Name....Common.Stock.."))
+
+nyse_common <- nyse_common %>% 
+  mutate(Name = str_replace(Name, " Common Stock", ""))
+  
 ```
 
 
