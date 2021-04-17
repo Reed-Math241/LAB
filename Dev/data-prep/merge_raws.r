@@ -9,7 +9,7 @@ print(files_listed)
 combined <- read_csv(paste(path, files_listed[1], sep = "/")) %>%
   mutate(created_utc = as.integer(created_utc),
          score = as.integer(score),
-         num_comments = as.character(num_comments))
+         num_comments = as.integer(num_comments))
 
 if("upvote_ratio" %in% names(combined)){
   combined <- combined %>%
@@ -20,6 +20,7 @@ if("upvote_ratio" %in% names(combined)){
 files_listed <-files_listed[-1] #removes the first file
 
 for (file in files_listed){
+  print(file)
   opened_file <- read_csv(paste(path, file, sep = "/")) %>%
     mutate(created_utc = as.integer(created_utc),
            score = as.integer(score),
