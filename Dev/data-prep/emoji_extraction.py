@@ -3,7 +3,6 @@ import advertools
 
 wsb_data = pd.read_csv("Data/raw_merged.csv")
 
-split_list = lambda lst, elem : [x[elem] for x in lst] 
 
 def emoji_count_list(text):
     return advertools.extract_emoji(text)['top_emoji']
