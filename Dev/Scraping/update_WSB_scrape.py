@@ -42,7 +42,7 @@ while q_time>stop_q_time_at:
 
 
 sub_data = pd.concat(data) #join scraped data
-sub_data = sub_data.drop_duplicates(subset=["permalink", "created_utc"]) # remove duplicates
+#sub_data = sub_data.drop_duplicates(subset=["permalink", "created_utc"]) # remove duplicates
 sub_data = sub_data.loc[sub_data['link_flair_text'] == "DD"] # Only DD flair
 sub_data = sub_data[['title', 'selftext', 'author', 'created_utc', 'upvote_ratio', 'score', "num_comments", "all_awardings", 'permalink']] #reorder cols
 

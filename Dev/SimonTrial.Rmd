@@ -1,0 +1,33 @@
+---
+title: "stock trial"
+author: "Sung Bum Ahn"
+date: "4/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(shiny)
+library(readr)
+library(stringr)
+require(quantmod)
+```
+
+```{r}
+nyse_tickers <- read_csv("Dev/data-prep/nyse_tickers.csv")
+View(nyse_tickers)
+
+wsb_dd_submissions <- read_csv("WSB-viz/www/wsb_dd_submissions.csv")
+View(wsb_dd_submissions)
+```
+
+
+
+```{r}
+getQuote("GME;AMC", what=yahooQF("Last Trade (Price Only)"))
+```
