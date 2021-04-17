@@ -38,6 +38,10 @@ ui <- fluidPage(
     
     # Application title
     navbarPage("WSB DD dashboard: [PUN HERE]",
+               tabPanel("Analysis",
+                        titlePanel("Analysis"),
+                        
+                        ),
                tabPanel("Posts",
                         titlePanel("Posts"),
                         sidebarLayout(
