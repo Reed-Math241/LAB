@@ -33,6 +33,7 @@ for (file in files_listed){
   combined <- bind_rows(combined, opened_file)
 }
 
-combined <- unique(combined)
+combined <- unique(combined) %>%
+  mutate(created_utc = strptime(created_utc, format="%s"))
 
-write_csv(combined, "data/raw_merged.csv")
+write_csv(combined, "data/wsb_dd_submissions.csv")
