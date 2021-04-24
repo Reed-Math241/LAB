@@ -41,6 +41,8 @@ wsb$post_sentiment <- map(wsb$selftext, calc_sentiment)%>%
 
 wsb$title_stocks <- map(wsb$title, named_stocks) %>%
   unlist()
+wsb$post_stocks <- map(wsb$selftext, named_stocks) %>%
+  unlist()
 
 
 write_csv(wsb, "data/wsb_dd_submissions.csv")
