@@ -16,6 +16,7 @@ library(shiny)
 library(readr)
 library(stringr)
 require(quantmod)
+library(lubridate)
 ```
 
 ```{r}
@@ -39,4 +40,20 @@ nyse_common <- nyse_common %>%
 
 ```{r}
 getQuote("GME;AMC", what=yahooQF("Last Trade (Price Only)"))
+```
+
+
+```{r}
+wsb_dd_submissions <- wsb_dd_submissions %>% 
+    mutate(ticker=strsplit(title_stocks, " ")) %>% 
+    unnest(ticker)
+
+count_ticker <- wsb_dd_submissions %>% 
+  group_by(created_utc) %>%
+  sub("\\s+.*", "", created_utc[[1]]) %>% 
+  count(ticker)
+glimpse(count_ticker)
+
+
+
 ```
