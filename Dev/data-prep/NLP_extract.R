@@ -7,6 +7,7 @@ library(ggplot2)
 
 
 
+
 wsb <- read_csv("data/wsb_dd_submissions.csv")
 nyse_common <- read_csv("Dev/data-prep/nyse_common.csv") %>%
   mutate(Symbol = tolower(Symbol))
@@ -22,7 +23,7 @@ calc_sentiment <- function(string){
 }
 
 
-named_stocks <- function(string){
+named_stocks <- function(string){ # Finds stocks named
   split <- unlist(strsplit(tolower(string), "[[:punct:] ]"))
   indexed <- match(split, nyse_common$Symbol)
   vals <- toupper(nyse_common$Symbol[indexed])
@@ -30,7 +31,38 @@ named_stocks <- function(string){
   return (paste(clean, collapse = ' '))
 }
 
+clean_awards <- function(string){ # Takes the all awardings column and returns three cols: count awards, coin coint, award names
+  if (is.na(string) || string=="[]"){
+    return(list("count_awards" = NA, "coin_awards" = NA, "award_names" = NA))
+  }
+  split_awards <- str_extract_all(awardings[5], "(?<=\\{).+?(?=\\})")[[1]]
+  only_awards <- split_awards[str_detect(split_awards, "award_sub_type")]
+  
+  count_awards <- str_extract_all(only_awards,"(?<=count': ).+(?=, 'days_of_drip_extension)")
+  count_awards <- sum(as.numeric(unlist(count_awards)))
+  
+  coin_awards <- str_extract_all(only_awards,"(?<=coin_price': ).+(?=, 'coin_reward)")
+  coin_awards <- sum(as.numeric(unlist(coin_awards)))
+  
+  award_names <- str_extract_all(only_awards,"(?<=name': ').+(?=', 'penny_donate)")
+  #award_names <- as.numeric(gsub(".*?([0-9]+).*", "\\1", award_names))
+  award_names <- paste(unlist(award_names))
+  
+  #type_awards
+  
+  return(list("count_awards" = count_awards, "coin_awards" = coin_awards, "award_names" = award_names))
+}
 
+awards <- map(wsb$all_awardings, clean_awards)
+
+awards <- as.data.frame(do.call(rbind,
+                      awards)) %>%
+  flatten()
+
+awards[] <- lapply(awards, unlist)
+
+wsb <- cbind(wsb, awards) %>%
+  subset(select=-c(all_awardings))
 
 
 wsb$title_sentiment <- map(wsb$title, calc_sentiment)%>%
@@ -45,13 +77,10 @@ wsb$post_stocks <- map(wsb$selftext, named_stocks) %>%
   unlist()
 
 
+
+# wsb <- wsb %>%
+#   mutate(created_utc = )
+
+
+
 write_csv(wsb, "data/wsb_dd_submissions.csv")
-
-
-
-
-
-
-
-meh <- wsb %>%
-   mutate(emojis = ji_extract_all(title))

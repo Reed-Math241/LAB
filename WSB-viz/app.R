@@ -59,11 +59,7 @@ ui <- fluidPage(
                                                max = "2020-07-31",
                                                start = "2018-08-02",
                                                end = "2020-07-31"),
-                                dateRangeInput("returnd_range",
-                                               "Returned date range",
-                                               min = "2018-08-02",
-                                               max = "2021-02-11",
-                                ),
+                                
                                 checkboxInput("thesis",
                                               "Only Reed Senior Theses",
                                               FALSE),
