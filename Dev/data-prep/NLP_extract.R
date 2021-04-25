@@ -45,10 +45,7 @@ clean_awards <- function(string){ # Takes the all awardings column and returns t
   coin_awards <- sum(as.numeric(unlist(coin_awards)))
   
   award_names <- str_extract_all(only_awards,"(?<=name': ').+(?=', 'penny_donate)")
-  #award_names <- as.numeric(gsub(".*?([0-9]+).*", "\\1", award_names))
   award_names <- paste(unlist(award_names))
-  
-  #type_awards
   
   return(list("count_awards" = count_awards, "coin_awards" = coin_awards, "award_names" = award_names))
 }
@@ -61,8 +58,9 @@ awards <- as.data.frame(do.call(rbind,
 
 awards[] <- lapply(awards, unlist)
 
-wsb <- cbind(wsb, awards) %>%
-  subset(select=-c(all_awardings))
+wsb <- cbind(wsb, awards)
+
+wsb <- subset(wsb, select = -c(all_awardings))
 
 
 wsb$title_sentiment <- map(wsb$title, calc_sentiment)%>%
