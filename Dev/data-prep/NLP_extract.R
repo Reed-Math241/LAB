@@ -33,7 +33,7 @@ named_stocks <- function(string){ # Finds stocks named
 
 clean_awards <- function(string){ # Takes the all awardings column and returns three cols: count awards, coin coint, award names
   if (is.na(string) || string=="[]"){
-    return(list("count_awards" = 0, "coin_awards" = 0, "award_names" =""))
+    return(list("count_awards" = 0, "coin_awards" = 0, "award_names" =" "))
   }
   split_awards <- str_extract_all(string, "(?<=\\{).+?(?=\\})")[[1]]
   only_awards <- split_awards[str_detect(split_awards, "award_sub_type")]
@@ -46,7 +46,7 @@ clean_awards <- function(string){ # Takes the all awardings column and returns t
   
   award_names <- str_extract_all(only_awards,"(?<=name': ').+(?=', 'penny_donate)")
   if(length(award_names)==0){
-    return(list("count_awards" = count_awards, "coin_awards" = coin_awards, "award_names" = NA))
+    return(list("count_awards" = count_awards, "coin_awards" = coin_awards, "award_names" = " "))
   }
   award_names <- paste(unlist(award_names), collapse= " ")
   
@@ -61,9 +61,9 @@ awards <- as.data.frame(do.call(rbind,
 awards[] <- lapply(awards, unlist) #changes type
 
 
-wsb <- cbind(wsb, awards)
+wsb <- cbind(wsb, awards) #joins datasets
 
-wsb <- subset(wsb, select = -c(all_awardings))
+wsb <- subset(wsb, select = -c(all_awardings)) #removes all awardings column
 
 
 wsb$title_sentiment <- map(wsb$title, calc_sentiment)%>%
