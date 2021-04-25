@@ -9,7 +9,7 @@ library(ggplot2)
 
 
 wsb <- read_csv("data/wsb_dd_submissions.csv")
-nyse_common <- read_csv("Dev/data-prep/nyse_common.csv") %>%
+merged_common.csv <- read_csv("Dev/data-prep/merged_common.csv") %>%
   mutate(Symbol = tolower(Symbol))
 
 
@@ -25,15 +25,15 @@ calc_sentiment <- function(string){
 
 named_stocks <- function(string){ # Finds stocks named
   split <- unlist(strsplit(tolower(string), "[[:punct:] ]"))
-  indexed <- match(split, nyse_common$Symbol)
-  vals <- toupper(nyse_common$Symbol[indexed])
+  indexed <- match(split, merged_common.csv$Symbol)
+  vals <- toupper(merged_common.csv$Symbol[indexed])
   clean <- vals[!is.na(vals)]
   return (paste(clean, collapse = ' '))
 }
 
 clean_awards <- function(string){ # Takes the all awardings column and returns three cols: count awards, coin coint, award names
   if (is.na(string) || string=="[]"){
-    return(list("count_awards" = NA, "coin_awards" = NA, "award_names" = NA))
+    return(list("count_awards" = 0, "coin_awards" = 0))
   }
   split_awards <- str_extract_all(string, "(?<=\\{).+?(?=\\})")[[1]]
   only_awards <- split_awards[str_detect(split_awards, "award_sub_type")]
@@ -44,10 +44,10 @@ clean_awards <- function(string){ # Takes the all awardings column and returns t
   coin_awards <- str_extract_all(only_awards,"(?<=coin_price': ).+(?=, 'coin_reward)")
   coin_awards <- sum(as.numeric(unlist(coin_awards)))
   
-  award_names <- str_extract_all(only_awards,"(?<=name': ').+(?=', 'penny_donate)")
-  award_names <- paste(unlist(award_names))
+  # award_names <- str_extract_all(only_awards,"(?<=name': ').+(?=', 'penny_donate)")
+  # award_names <- paste(unlist(award_names), collapse= " ")
   
-  return(list("count_awards" = count_awards, "coin_awards" = coin_awards, "award_names" = award_names))
+  return(list("count_awards" = count_awards, "coin_awards" = coin_awards))
 }
 
 awards <- map(wsb$all_awardings, clean_awards)
@@ -55,11 +55,12 @@ awards <- map(wsb$all_awardings, clean_awards)
 awards <- as.data.frame(do.call(rbind,
                       awards))
 
-awards[] <- lapply(awards, unlist)
+awards[] <- lapply(awards, unlist) #changes type
 
-wsb <- cbind(wsb, awards)
 
-wsb <- subset(wsb, select = -c(all_awardings))
+wsb <- cbind(wsb, awards) #joins datasets
+
+wsb <- subset(wsb, select = -c(all_awardings)) #removes all awardings column
 
 
 wsb$title_sentiment <- map(wsb$title, calc_sentiment)%>%
@@ -72,7 +73,6 @@ wsb$title_stocks <- map(wsb$title, named_stocks) %>%
   unlist()
 wsb$post_stocks <- map(wsb$selftext, named_stocks) %>%
   unlist()
-
 
 
 write_csv(wsb, "data/wsb_dd_submissions.csv")
