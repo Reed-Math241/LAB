@@ -33,7 +33,7 @@ named_stocks <- function(string){ # Finds stocks named
 
 clean_awards <- function(string){ # Takes the all awardings column and returns three cols: count awards, coin coint, award names
   if (is.na(string) || string=="[]"){
-    return(list("count_awards" = NA, "coin_awards" = NA, "award_names" = NA))
+    return(list("count_awards" = NA, "coin_awards" = NA, "award_names" =NA))
   }
   split_awards <- str_extract_all(string, "(?<=\\{).+?(?=\\})")[[1]]
   only_awards <- split_awards[str_detect(split_awards, "award_sub_type")]
@@ -45,7 +45,10 @@ clean_awards <- function(string){ # Takes the all awardings column and returns t
   coin_awards <- sum(as.numeric(unlist(coin_awards)))
   
   award_names <- str_extract_all(only_awards,"(?<=name': ').+(?=', 'penny_donate)")
-  award_names <- paste(unlist(award_names))
+  if(length(award_names)==0){
+    return(list("count_awards" = count_awards, "coin_awards" = coin_awards, "award_names" = NA))
+  }
+  award_names <- paste(unlist(award_names), collapse= " ")
   
   return(list("count_awards" = count_awards, "coin_awards" = coin_awards, "award_names" = award_names))
 }
@@ -56,6 +59,7 @@ awards <- as.data.frame(do.call(rbind,
                       awards))
 
 awards[] <- lapply(awards, unlist)
+
 
 wsb <- cbind(wsb, awards)
 
@@ -72,7 +76,6 @@ wsb$title_stocks <- map(wsb$title, named_stocks) %>%
   unlist()
 wsb$post_stocks <- map(wsb$selftext, named_stocks) %>%
   unlist()
-
 
 
 write_csv(wsb, "data/wsb_dd_submissions.csv")
