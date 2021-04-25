@@ -33,7 +33,7 @@ named_stocks <- function(string){ # Finds stocks named
 
 clean_awards <- function(string){ # Takes the all awardings column and returns three cols: count awards, coin coint, award names
   if (is.na(string) || string=="[]"){
-    return(list("count_awards" = NA, "coin_awards" = NA, "award_names" =NA))
+    return(list("count_awards" = 0, "coin_awards" = 0, "award_names" =""))
   }
   split_awards <- str_extract_all(string, "(?<=\\{).+?(?=\\})")[[1]]
   only_awards <- split_awards[str_detect(split_awards, "award_sub_type")]
@@ -58,7 +58,7 @@ awards <- map(wsb$all_awardings, clean_awards)
 awards <- as.data.frame(do.call(rbind,
                       awards))
 
-awards[] <- lapply(awards, unlist)
+awards[] <- lapply(awards, unlist) #changes type
 
 
 wsb <- cbind(wsb, awards)
