@@ -16,7 +16,7 @@ library(DT)
 #Section to read in data
 
 data <- read_csv("www/wsb_dd_submissions.csv") %>%
-    head(15)
+    mutate(created_utc = strptime(created_utc, format="%s"))
 
 ###########
 #Functions#
@@ -38,52 +38,52 @@ ui <- fluidPage(
     
     # Application title
     navbarPage("WSB DD dashboard: [PUN HERE]",
-               tabPanel("Analysis",
-                        titlePanel("Analysis"),
-                        
-                        ),
-               tabPanel("Posts",
-                        titlePanel("Posts"),
-                        sidebarLayout(
-                            sidebarPanel(),
-                            mainPanel(
-                                tabsetPanel(
-                                    tabPanel("graph", plotOutput("holder_graph")) # name of graph and out put of graph
-                                ) # end `tabsetPanel`
-                                ) # end `mainPanel`
-                        ) #end `sidebarLayout`
-               ), #end `tabPanel "posts"`
-               
-               
-               tabPanel("By Author",
-                        titlePanel("Author"),
-                        sidebarLayout(
-                            sidebarPanel( 
-                                textInput("author",
-                                          "Author: ")
-                            ), # End `sidebarPanel`
-                            mainPanel(
-                                tabPanel("graph", plotOutput("holder_graph")) # name of graph and out put of graph
-                            ) #end
-                        ), #end `tabPanel`
-               
-               ),
-               
                tabPanel("Table",
                         titlePanel("Table"),
+                        ######################
+                        #Sidebar layout for DF
+                        ######################
                         sidebarLayout(
                             sidebarPanel(
-                                textInput("post_name",
-                                          "Post Title: ")
+                                textInput("title",
+                                          "Post Title: "),
+                                textInput("author",
+                                          "Author: "),
+                                sliderInput("scoreRange", "Created Range:",
+                                            min = 0, max = 5700,
+                                            value = c(0, 5700),
+                                            sep=""),
+                                dateRangeInput("createRange",
+                                               "Created Range:",
+                                               min = "2018-08-02",
+                                               max = "2020-07-31",
+                                               start = "2018-08-02",
+                                               end = "2020-07-31"),
+                                dateRangeInput("returnd_range",
+                                               "Returned date range",
+                                               min = "2018-08-02",
+                                               max = "2021-02-11",
+                                ),
+                                checkboxInput("thesis",
+                                              "Only Reed Senior Theses",
+                                              FALSE),
+                                checkboxInput("unreturned",
+                                              "Only unreturned",
+                                              FALSE)
                             ),
+                            ##############
+                            #Main panel DF
+                            ##############
                             mainPanel(
-                                DTOutput("table")
+                                tabPanel("Table", 
+                                         DTOutput("table")
+                                )
                             )
-                        ) #end `sidebarLayout`
-               )
                
     ) #End navbar page
+               )
 
+)
 )
 
 # Define server logic required to draw a histogram
@@ -95,7 +95,12 @@ server <- function(input, output) {
             ggplot(aes(score, num_comments)) +
             geom_point()
     })
-    output$table <- renderDT(data) # Name of table needed, displays table
+    output$table <- renderDT(data %>%
+                                 subset(selet=-c(permalink))) # Name of table needed, displays table
+    
+    output$live <- renderPlot({data %>%
+            ggplot(aes(score, num_comments)) +
+            geom_point()})
 }
 
 # Run the application 
