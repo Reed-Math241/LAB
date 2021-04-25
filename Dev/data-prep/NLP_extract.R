@@ -9,7 +9,7 @@ library(ggplot2)
 
 
 wsb <- read_csv("data/wsb_dd_submissions.csv")
-nyse_common <- read_csv("Dev/data-prep/nyse_common.csv") %>%
+merged_common.csv <- read_csv("Dev/data-prep/merged_common.csv") %>%
   mutate(Symbol = tolower(Symbol))
 
 
@@ -25,8 +25,8 @@ calc_sentiment <- function(string){
 
 named_stocks <- function(string){ # Finds stocks named
   split <- unlist(strsplit(tolower(string), "[[:punct:] ]"))
-  indexed <- match(split, nyse_common$Symbol)
-  vals <- toupper(nyse_common$Symbol[indexed])
+  indexed <- match(split, merged_common.csv$Symbol)
+  vals <- toupper(merged_common.csv$Symbol[indexed])
   clean <- vals[!is.na(vals)]
   return (paste(clean, collapse = ' '))
 }
