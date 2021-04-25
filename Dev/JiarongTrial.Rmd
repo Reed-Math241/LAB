@@ -1,0 +1,25 @@
+---
+title: "Jiarong_dev"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(shiny)
+library(readr)
+library(stringr)
+```
+
+```{r}
+wsb_dd_submissions <- read_csv("../WSB-viz/www/wsb_dd_submissions.csv")
+```
+
+
+```{r}
+sa_data <- wsb_dd_submissions %>%
+  drop_na(selftext)
+```

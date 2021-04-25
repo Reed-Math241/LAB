@@ -17,11 +17,12 @@ library(readr)
 library(stringr)
 require(quantmod)
 library(lubridate)
+library(anytime)
 ```
 
 ```{r}
-nyse_tickers <- read_csv("Dev/data-prep/nyse_tickers.csv")
-wsb_dd_submissions <- read_csv("WSB-viz/www/wsb_dd_submissions.csv")
+nyse_tickers <- read_csv("data-prep/nyse_tickers.csv")
+wsb_dd_submissions <- read_csv("../WSB-viz/www/wsb_dd_submissions.csv")
 View(wsb_dd_submissions)
 ```
 
@@ -47,13 +48,18 @@ getQuote("GME;AMC", what=yahooQF("Last Trade (Price Only)"))
 wsb_dd_submissions <- wsb_dd_submissions %>% 
     mutate(ticker=strsplit(title_stocks, " ")) %>% 
     unnest(ticker)
+```
 
+```{r}
+wsb_dd_submissions <- wsb_dd_submissions %>% 
+  mutate(date = anydate(created_utc))
+```
+
+```{r}
 count_ticker <- wsb_dd_submissions %>% 
   group_by(created_utc) %>%
   sub("\\s+.*", "", created_utc[[1]]) %>% 
   count(ticker)
 glimpse(count_ticker)
-
-
 
 ```
