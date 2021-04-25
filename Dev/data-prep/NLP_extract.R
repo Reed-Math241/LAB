@@ -35,7 +35,7 @@ clean_awards <- function(string){ # Takes the all awardings column and returns t
   if (is.na(string) || string=="[]"){
     return(list("count_awards" = NA, "coin_awards" = NA, "award_names" = NA))
   }
-  split_awards <- str_extract_all(awardings[5], "(?<=\\{).+?(?=\\})")[[1]]
+  split_awards <- str_extract_all(string, "(?<=\\{).+?(?=\\})")[[1]]
   only_awards <- split_awards[str_detect(split_awards, "award_sub_type")]
   
   count_awards <- str_extract_all(only_awards,"(?<=count': ).+(?=, 'days_of_drip_extension)")
@@ -53,8 +53,7 @@ clean_awards <- function(string){ # Takes the all awardings column and returns t
 awards <- map(wsb$all_awardings, clean_awards)
 
 awards <- as.data.frame(do.call(rbind,
-                      awards)) %>%
-  flatten()
+                      awards))
 
 awards[] <- lapply(awards, unlist)
 
@@ -73,11 +72,6 @@ wsb$title_stocks <- map(wsb$title, named_stocks) %>%
   unlist()
 wsb$post_stocks <- map(wsb$selftext, named_stocks) %>%
   unlist()
-
-
-
-# wsb <- wsb %>%
-#   mutate(created_utc = )
 
 
 
