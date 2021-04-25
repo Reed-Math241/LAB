@@ -57,9 +57,18 @@ wsb_dd_submissions <- wsb_dd_submissions %>%
 
 ```{r}
 count_ticker <- wsb_dd_submissions %>% 
-  group_by(created_utc) %>%
-  sub("\\s+.*", "", created_utc[[1]]) %>% 
+  drop_na() %>% 
+  group_by(date) %>%
   count(ticker)
-glimpse(count_ticker)
-
 ```
+
+```{r}
+
+
+top_10 <- count_ticker %>%
+  arrange(desc(n)) %>%
+  filter(date == as.Date("2021-01-01") | date == as.Date("2021-01-02")) 
+ggplot(data = top_10, aes(x = ticker, y = n)) +
+  geom_col()
+```
+
