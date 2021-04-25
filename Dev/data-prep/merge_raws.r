@@ -33,8 +33,6 @@ for (file in files_listed){
   combined <- bind_rows(combined, opened_file)
 }
 
-combined <- unique(combined) %>%
-  mutate(created_utc = strptime(created_utc, format="%s")) %>%
-  subset(select=-c("all_awardings", "score"))
+combined <- unique(combined)
 
 write_csv(combined, "data/wsb_dd_submissions.csv")
