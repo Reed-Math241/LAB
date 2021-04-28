@@ -63,8 +63,6 @@ count_ticker <- wsb_dd_submissions %>%
 ```
 
 ```{r}
-
-
 top_10 <- count_ticker %>%
   filter(date >= as.Date("2021-01-01") & date <= as.Date("2021-01-07")) %>%
   group_by(ticker) %>%
