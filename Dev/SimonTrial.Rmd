@@ -47,7 +47,8 @@ getQuote("GME;AMC", what=yahooQF("Last Trade (Price Only)"))
 ```{r}
 wsb_dd_submissions <- wsb_dd_submissions %>% 
     mutate(ticker=strsplit(title_stocks, " ")) %>% 
-    unnest(ticker)
+    unnest(ticker) %>% 
+    drop_na(ticker)
 ```
 
 ```{r}
@@ -72,5 +73,34 @@ top_10 <- count_ticker %>%
 ggplot(data = top_10, aes(x = ticker, y = count)) +
   geom_col()
 ```
+Page 2
+
+Data Preparation for page 2
+```{r}
+userSelectDate2 <- wsb_dd_submissions %>%
+  filter(date >= as.Date("2021-01-01") & date <= as.Date("2021-01-05")) %>%
+  filter(post_sentiment != 0)
+```
+
+```{r}
+sentiment <- userSelectDate2 %>%
+  group_by(ticker) %>%
+  summarise(sentiment = sum(post_sentiment))
+
+mentionedTimes <- userSelectDate2 %>%
+  group_by(date) %>%
+  count(ticker) %>% 
+  group_by(ticker) %>%
+  summarise(count = sum(n))
+
+kmeanData <- merge(sentiment, mentionedTimes, by = "ticker")
+```
+
+Plot for page 2
+```{r}
+ggplot(data = kmeanData, aes(x = sentiment, y = count, color = ticker, size = count)) +
+  geom_point()
+```
+
 
 
