@@ -8,7 +8,7 @@ old = pd.read_csv("Data/raw-historical/2021_raw_wsb_dd_submissions.csv")
 
 stop_q_time_at = max(old["created_utc"]) #minimum query time, previous max
 
-print(stop_q_time_at)
+print("Query till: ", stop_q_time_at)
 
 ### Below is identical to previous
 data = [] # list that holds scraped data
@@ -24,7 +24,8 @@ def getPushshiftData(sub, before, filters):
     r = requests.get(url)
     if r.status_code!=200: #if error
       print("Error code: ", r.status_code) #print code
-      print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(q_time))) #prints query time stuck
+      print("Clean time: ", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(q_time))) #prints query time stuck
+      print("Epoch time: ", q_time)
       time.sleep(25) #pauses for 8.5 seconds to avoid error 429
       return getPushshiftData(sub, before, filters) #trys again
     data = json.loads(r.text)
