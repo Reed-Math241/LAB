@@ -18,6 +18,8 @@ library(stringr)
 require(quantmod)
 library(lubridate)
 library(anytime)
+library(cluster)    # clustering algorithms
+library(factoextra) # clustering algorithms & visualization
 ```
 
 ```{r}
@@ -85,7 +87,8 @@ userSelectDate2 <- wsb_dd_submissions %>%
 ```{r}
 sentiment <- userSelectDate2 %>%
   group_by(ticker) %>%
-  summarise(sentiment = sum(post_sentiment))
+  summarise(sentiment = sum(post_sentiment)) %>% 
+  drop_na()
 
 mentionedTimes <- userSelectDate2 %>%
   group_by(date) %>%
@@ -93,7 +96,7 @@ mentionedTimes <- userSelectDate2 %>%
   group_by(ticker) %>%
   summarise(count = sum(n))
 
-kmeanData <- merge(sentiment, mentionedTimes, by = "ticker")
+kmeanData <- merge(sentiment, mentionedTimes, by = "ticker") %>% 
 ```
 
 Plot for page 2
@@ -102,5 +105,28 @@ ggplot(data = kmeanData, aes(x = sentiment, y = count, color = ticker, size = co
   geom_point()
 ```
 
+```{r}
+kmeanDataNum <- kmeanData %>% 
+  select(sentiment, count)
+```
 
+kmeans computing and plots
+```{r}
+?kmeans
+glimpse(kmeanData)
+k2 <- kmeans(kmeanDataNum, centers = 2, nstart = 25)
+k3 <- kmeans(kmeanDataNum, centers = 3, nstart = 25)
+k4 <- kmeans(kmeanDataNum, centers = 4, nstart = 25)
+k5 <- kmeans(kmeanDataNum, centers = 5, nstart = 25)
+
+# plots to compare
+p1 <- fviz_cluster(k2, geom = "point", data = kmeanDataNum) + ggtitle("k = 2")
+p2 <- fviz_cluster(k3, geom = "point",  data = kmeanDataNum) + ggtitle("k = 3")
+p3 <- fviz_cluster(k4, geom = "point",  data = kmeanDataNum) + ggtitle("k = 4")
+p4 <- fviz_cluster(k5, geom = "point",  data = kmeanDataNum) + ggtitle("k = 5")
+p1
+
+library(gridExtra)
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
 

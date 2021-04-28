@@ -38,3 +38,4 @@ pageWithSidebar(
     plotOutput('plot1')
   )
 )
+
