@@ -41,6 +41,7 @@ while q_time>stop_q_time_at:
   data.append(pd.DataFrame(holder)) #converts to pandas and adds to data list
   q_time = holder[len(holder)-1]["created_utc"]
 
+print("Finshed scraping")
 
 sub_data = pd.concat(data) #join scraped data
 #sub_data = sub_data.drop_duplicates(subset=["permalink", "created_utc"]) # remove duplicates
@@ -50,3 +51,5 @@ sub_data = sub_data[['title', 'selftext', 'author', 'created_utc', 'upvote_ratio
 sub_data = pd.concat([sub_data, old], ignore_index=True)
 
 sub_data.to_csv("Data/raw-historical/2021_raw_wsb_dd_submissions.csv", index=False)
+
+print("Finshed saving")
