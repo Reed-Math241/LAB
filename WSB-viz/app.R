@@ -107,7 +107,7 @@ server <- function(input, output, session) {
                          choices = tickers$Symbol, 
                          server = TRUE)
     updateSelectizeInput(session, 'author', 
-                         choices = unique(wsb$author), 
+                         choices = unique(data$author), 
                          server = TRUE)
     
     table_clean <- reactive({
