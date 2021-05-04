@@ -48,8 +48,10 @@ ui <- fluidPage(
                             sidebarPanel(
                                 textInput("title",
                                           "Post Title: "),
-                                textInput("author",
-                                          "Author: "),
+                                selectizeInput("author",
+                                               "Author: ",
+                                               choices = NULL,
+                                               multiple = TRUE),
                                 sliderInput("scoreRange", "Post Score:",
                                             min = 0, max = 5700,
                                             value = c(0, 5700),
@@ -72,15 +74,12 @@ ui <- fluidPage(
                                             min = -20, max = 16,
                                             value = c(-20, 16),
                                             sep=""),
-                                sliderInput("tpostSentiment", "Post Sentiment:",
+                                sliderInput("postSentiment", "Post Sentiment:",
                                             min = -240, max = 260,
                                             value = c(-240, 260),
                                             sep=""),
                                 checkboxInput("onlySelftext",
                                               "Only posts with selftext",
-                                              FALSE),
-                                checkboxInput("unreturned",
-                                              "Only unreturned",
                                               FALSE)
                             ),
                             ##############
@@ -102,33 +101,46 @@ ui <- fluidPage(
 server <- function(input, output, session) {
     
     updateSelectizeInput(session, 'titleStocks', 
-                         choices = unique(tickers$Symbol), 
+                         choices = tickers$Symbol, 
                          server = TRUE)
     updateSelectizeInput(session, 'postStocks', 
-                         choices = unique(tickers$Symbol), 
+                         choices = tickers$Symbol, 
+                         server = TRUE)
+    updateSelectizeInput(session, 'author', 
+                         choices = unique(wsb$author), 
                          server = TRUE)
     
     table_clean <- reactive({
         filtered <- data %>%
             subset(select=-c(permalink)) %>%
-            mutate(created_utc = strptime(created_utc, format="%s"))
+            mutate(created_utc = strptime(created_utc, tz = "GMT", format="%s"))
         
-        if(length(input$titleStocks)>0){
-            input_stock_list <- str_c("\\b", input$titleStocks, "\\b")
-            input_stock_list <- paste(input_stock_list, collapse = "|")
-            print(input_stock_list)
-            print(typeof(input_stock_list))
+        if(length(input$titleStocks)>0){ #filters title stocks
+            input_regex_clean <- str_c("\\b", input$titleStocks, "\\b")
+            input_regex_clean <- paste(input_regex_clean, collapse = "|")
             filtered <- filtered %>%
-                filter(grepl(input_stock_list, title_stocks))
+                filter(grepl(input_regex_clean, title_stocks))
         }
         if(length(input$postStocks)>0){
-            input_stock_list <- str_c("\\b", input$postStocks, "\\b")
-            input_stock_list <- paste(input_stock_list, collapse = "|")
-            print(input_stock_list)
-            print(typeof(input_stock_list))
+            input_regex_clean <- str_c("\\b", input$postStocks, "\\b")
+            input_regex_clean <- paste(input_regex_clean, collapse = "|")
             filtered <- filtered %>%
-                filter(grepl(input_stock_list, post_stocks))
+                filter(grepl(input_regex_clean, post_stocks))
         }
+        if(length(input$author)>0){
+            input_regex_clean <- str_c("\\b", input$author, "\\b")
+            input_regex_clean <- paste(input_regex_clean, collapse = "|")
+            filtered <- filtered %>%
+                filter(grepl(input_regex_clean, author))
+        }
+        if(input$title!=""){
+            filtered <- filtered %>%
+                filter(grepl(input$title, title))
+        }
+        
+        filtered <- filtered %>%
+            mutate(created_utc = strftime(created_utc, tz = Sys.timezone, format="%c")) #%>%
+            #filter(score %in% c(scoreRange[1]:scoreRange[2]))
         
         return(as.data.frame(filtered))
         
