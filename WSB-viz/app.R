@@ -64,6 +64,10 @@ ui <- fluidPage(
                                                "Title Stocks: ",
                                                choices = NULL,
                                                multiple = TRUE),
+                                selectizeInput("postStocks",
+                                               "Post Stocks: ",
+                                               choices = NULL,
+                                               multiple = TRUE),
                                 sliderInput("titleSentiment", "Title Sentiment:",
                                             min = -20, max = 16,
                                             value = c(-20, 16),
@@ -100,6 +104,35 @@ server <- function(input, output, session) {
     updateSelectizeInput(session, 'titleStocks', 
                          choices = unique(tickers$Symbol), 
                          server = TRUE)
+    updateSelectizeInput(session, 'postStocks', 
+                         choices = unique(tickers$Symbol), 
+                         server = TRUE)
+    
+    table_clean <- reactive({
+        filtered <- data %>%
+            subset(select=-c(permalink)) %>%
+            mutate(created_utc = strptime(created_utc, format="%s"))
+        
+        if(length(input$titleStocks)>0){
+            input_stock_list <- str_c("\\b", input$titleStocks, "\\b")
+            input_stock_list <- paste(input_stock_list, collapse = "|")
+            print(input_stock_list)
+            print(typeof(input_stock_list))
+            filtered <- filtered %>%
+                filter(grepl(input_stock_list, title_stocks))
+        }
+        if(length(input$postStocks)>0){
+            input_stock_list <- str_c("\\b", input$postStocks, "\\b")
+            input_stock_list <- paste(input_stock_list, collapse = "|")
+            print(input_stock_list)
+            print(typeof(input_stock_list))
+            filtered <- filtered %>%
+                filter(grepl(input_stock_list, post_stocks))
+        }
+        
+        return(as.data.frame(filtered))
+        
+    })
     
     output$holder_graph <- renderPlot({
         print("imma rendering")
@@ -107,10 +140,7 @@ server <- function(input, output, session) {
             ggplot(aes(score, num_comments)) +
             geom_point()
     })
-    output$table <- renderDT(data %>%
-                                 subset(select=-c(permalink)) %>%
-                                 mutate(created_utc = strptime(created_utc, format="%s"))
-                             ) # Name of table needed, displays table
+    output$table <- renderDT(table_clean()) # Name of table needed, displays table
     
     output$live <- renderPlot({data %>%
             ggplot(aes(score, num_comments)) +
