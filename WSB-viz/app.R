@@ -58,10 +58,10 @@ ui <- fluidPage(
                                             sep=""),
                                 dateRangeInput("createRange",
                                                "Created Range:",
-                                               min = "2018-08-02",
-                                               max = "2020-07-31",
+                                               min = "2018-01-01",
+                                               max = "2021-12-31",
                                                start = "2018-08-02",
-                                               end = "2020-07-31"),
+                                               end = "2021-12-31"),
                                 selectizeInput("titleStocks",
                                                "Title Stocks: ",
                                                choices = NULL,
@@ -112,8 +112,8 @@ server <- function(input, output, session) {
     
     table_clean <- reactive({
         filtered <- data %>%
-            subset(select=-c(permalink)) %>%
-            mutate(created_utc = strptime(created_utc, tz = "GMT", format="%s"))
+            subset(select=-c(permalink, coin_awards, num_comments)) %>%
+            mutate(created_utc = strptime(created_utc, format="%s"))
         
         if(length(input$titleStocks)>0){ #filters title stocks
             input_regex_clean <- str_c("\\b", input$titleStocks, "\\b")
@@ -135,12 +135,20 @@ server <- function(input, output, session) {
         }
         if(input$title!=""){
             filtered <- filtered %>%
-                filter(grepl(input$title, title))
+                filter(grepl(tolower(input$title), tolower(title)))
         }
         
         filtered <- filtered %>%
-            mutate(created_utc = strftime(created_utc, tz = Sys.timezone, format="%c")) #%>%
-            #filter(score %in% c(scoreRange[1]:scoreRange[2]))
+            filter(score >= input$scoreRange[1],
+                   score <= input$scoreRange[2],
+                   post_sentiment >= input$postSentiment[1],
+                   post_sentiment <= input$postSentiment[2],
+                   title_sentiment >= input$titleSentiment[1],
+                   title_sentiment <= input$titleSentiment[2],
+                   created_utc >= as.Date(input$createRange[1]),
+                   created_utc <= as.Date(input$createRange[2])) %>%
+            mutate(created_utc = strftime(created_utc, format="%Y-%m-%d %H:%M:%S"))
+            
         
         return(as.data.frame(filtered))
         
