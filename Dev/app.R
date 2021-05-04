@@ -7,20 +7,16 @@ library(lubridate)
 library(cluster)    # clustering algorithms
 library(factoextra)
 library(ggrepel)
+library(readr)
+
+wsb_dd_submissions <- read_csv("Dev/WrangledData/wsb_dd_submissions.csv")
+count_ticker <- read_csv("Dev/WrangledData/count_ticker.csv")
 
 
-wsb_dd_submissions <- read_csv("../WSB-viz/www/wsb_dd_submissions.csv")
-wsb_dd_submissions <- wsb_dd_submissions %>% 
-  mutate(ticker=strsplit(title_stocks, " ")) %>% 
-  unnest(ticker) %>% 
-  drop_na(ticker) %>% 
-  mutate(date = anydate(created_utc))
 
-userSelectDate2 <- wsb_dd_submissions %>%
-  filter(date >= as.Date("2021-01-01") & date <= as.Date("2021-01-05")) %>%
-  filter(post_sentiment != 0)
 
-vars <- setdiff(names(iris), "Species")
+#ui
+vars <- setdiff(names(wsb_dd_submissions), "ticker")
 
 pageWithSidebar(
   headerPanel('Iris k-means clustering'),
@@ -34,6 +30,7 @@ pageWithSidebar(
   )
 )
 
+#server
 
 function(input, output, session) {
   

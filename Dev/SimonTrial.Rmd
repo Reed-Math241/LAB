@@ -19,7 +19,8 @@ require(quantmod)
 library(lubridate)
 library(anytime)
 library(cluster)    # clustering algorithms
-library(factoextra) # clustering algorithms & visualization
+library(factoextra)
+library(ggrepel)# clustering algorithms & visualization
 ```
 
 ```{r}
