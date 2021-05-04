@@ -9,6 +9,28 @@ library(stringr) # for string manipulation
 library(DT)
 
 
+count_and_sent <- function(df){
+    
+    sentiment_of_stock <- function(ticker){
+        filtered_rows <- df%>%
+            filter(grepl(paste("\\b", ticker, "\\b"), title_stocks))
+        return(mean(filtered_rows$title_sentiment))
+    }
+    
+    stocks <- df$title_stocks[!is.na(df$title_stocks)]
+    stocks <- paste(stocks, sep = " ")
+    stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
+    stocks <- unlist(stocks)
+    stocks <- stocks[-(0:30)]
+    grouped <- tibble("stock" = stocks) %>%
+        group_by(stock) %>%
+        summarise(mentions=n())
+    grouped$sentiment <- unlist(map(grouped$stock, sentiment_of_stock))
+    grouped$sentiment[is.nan(grouped$sentiment)] <- 0 
+    return(grouped)
+}
+
+
 ######
 #Data#
 ######
@@ -24,10 +46,8 @@ tickers <- read_csv("www/tickers.csv")
 ###########
 
 
-
-
 ui <- fluidPage(
-
+    
     theme = bs_theme(bg = "#ffffff", #Setting theme
                      fg = "#000000", 
                      primary = "#273c75", 
@@ -39,6 +59,29 @@ ui <- fluidPage(
     
     # Application title
     navbarPage("WSB DD dashboard: [PUN HERE]",
+               tabPanel("Stocks Sentiment Clustering",
+                        titlePanel("Stocks Sentiment Clustering"),
+                        sidebarLayout(
+                            sidebarPanel(
+                                dateRangeInput("createRange",
+                                               "Created Range:",
+                                               min = "2018-01-01",
+                                               max = "2021-12-31",
+                                               start = "2021-04-29",
+                                               end = "2021-05-04"),
+                                numericInput('clusters', 
+                                             'Cluster count', 
+                                             3, 
+                                             min = 1, 
+                                             max = 9)
+                            ), #end sidebar panel
+                        
+                        mainPanel(
+                            plotOutput("cluster_graph")
+                        )
+                        ) # end SIdebar layou
+                        ), #end StockSentiment Clustering panel
+               
                tabPanel("Table",
                         titlePanel("Table"),
                         ######################
@@ -90,12 +133,13 @@ ui <- fluidPage(
                                          DTOutput("table")
                                 )
                             )
-               
-    ) #End navbar page
+                            
+                        ) #End navbar page
                )
+               
+    )
+)
 
-)
-)
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
@@ -154,16 +198,16 @@ server <- function(input, output, session) {
         
     })
     
-    output$holder_graph <- renderPlot({
-        print("imma rendering")
-        data %>%
-            ggplot(aes(score, num_comments)) +
-            geom_point()
-    })
+
     output$table <- renderDT(table_clean()) # Name of table needed, displays table
     
-    output$live <- renderPlot({data %>%
-            ggplot(aes(score, num_comments)) +
+    output$cluster_graph <- renderPlot({
+        data %>%
+            filter(created_utc >= as.Date(input$createRange[1]),
+                   created_utc <= as.Date(input$createRange[2])) %>%
+            count_and_sent() %>%
+            #kmeans(centers = input$clusters, nstart = 25)
+            ggplot(aes(mentions, sentiment)) +
             geom_point()})
 }
 
