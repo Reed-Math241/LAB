@@ -4,12 +4,21 @@ library(DT)
 library(india.air)
 library(shiny) 
 library(lubridate)
+library(cluster)    # clustering algorithms
+library(factoextra)
+library(ggrepel)
 
-wsb_dd_submissions <- read_csv("../WSB-viz/www/wsb_dd_submissions.csv") %>% 
+
+wsb_dd_submissions <- read_csv("../WSB-viz/www/wsb_dd_submissions.csv")
+wsb_dd_submissions <- wsb_dd_submissions %>% 
   mutate(ticker=strsplit(title_stocks, " ")) %>% 
   unnest(ticker) %>% 
-  drop_na(ticker)
+  drop_na(ticker) %>% 
+  mutate(date = anydate(created_utc))
 
+userSelectDate2 <- wsb_dd_submissions %>%
+  filter(date >= as.Date("2021-01-01") & date <= as.Date("2021-01-05")) %>%
+  filter(post_sentiment != 0)
 
 vars <- setdiff(names(iris), "Species")
 
@@ -25,53 +34,17 @@ pageWithSidebar(
   )
 )
 
-# User interface
-ui <- fluidPage(
-  titlePanel("WSB K-Means Clustering"),
-  sidebarLayout(
-    sidebarPanel(
-      # Create a text input widget
-      dateRangeInput("year_range", "Range of Date:",
-                     min = "2015-01-01",
-                     max = "2020-07-01",
-                     start = "2015-01-01",
-                     end = "2020-07-01"),
-      numericInput('clusters', 'Cluster count', 3, min = 1, max = 9)
-    ),
-      
-    )
 
-
-
-
-# Server function
-server <- function(input, output, session) {
+function(input, output, session) {
   
   # Combine the selected variables into a new data frame
   selectedData <- reactive({
-    iris[, c(input$sentiment, input$count)]
+    iris[, c(input$xcol, input$ycol)]
   })
   
   clusters <- reactive({
     kmeans(selectedData(), input$clusters)
   })
-  
-  userSelectDate2 <- wsb_dd_submissions %>%
-    filter(date >= as.Date("2021-01-01") & date <= as.Date("2021-01-05")) %>%
-    filter(post_sentiment != 0)
-  
-  sentiment <- userSelectDate2 %>%
-    group_by(ticker) %>%
-    summarise(sentiment = sum(post_sentiment)) %>% 
-    drop_na()
-  
-  mentionedTimes <- userSelectDate2 %>%
-    group_by(date) %>%
-    count(ticker) %>% 
-    group_by(ticker) %>%
-    summarise(count = sum(n))
-  
-  kmeanData <- merge(sentiment, mentionedTimes, by = "ticker") 
   
   output$plot1 <- renderPlot({
     palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
@@ -85,6 +58,7 @@ server <- function(input, output, session) {
   })
   
 }
+
 
 
 
