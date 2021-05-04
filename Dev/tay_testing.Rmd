@@ -1,0 +1,25 @@
+---
+title: "Taylor Testing"
+author: "Taylor Blair"
+date: "5/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Libraries
+
+
+```{r cars}
+library(tidyverse)
+
+```
+
+# Loading data
+
+```{r pressure, echo=FALSE}
+wsb_dd_submissions <- read_csv("Data/wsb_dd_submissions.csv")
+```
+
