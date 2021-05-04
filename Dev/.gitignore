@@ -1,3 +1,5 @@
+
+
 function(input, output, session) {
   
   # Combine the selected variables into a new data frame
@@ -21,7 +23,7 @@ function(input, output, session) {
   })
   
 }
-
+#server
 # k-means only works with numerical variables,
 # so don't give the user the option to select
 # a categorical variable
@@ -38,4 +40,3 @@ pageWithSidebar(
     plotOutput('plot1')
   )
 )
-
