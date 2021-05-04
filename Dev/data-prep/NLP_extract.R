@@ -1,7 +1,7 @@
 #devtools::install_github("hadley/emo")
 
 library(tidyverse)
-library(emo)
+#library(emo)
 library(tidytext)
 library(ggplot2)
 
@@ -75,4 +75,6 @@ wsb$post_stocks <- map(wsb$selftext, named_stocks) %>%
   unlist()
 
 
-write_csv(wsb, "data/wsb_dd_submissions.csv")
+write_csv(wsb, "data/wsb_dd_submissions.csv") #writes to dev
+write_csv(wsb, "WSB-viz/www/wsb_dd_submissions.csv") # Writes to shiny
+
