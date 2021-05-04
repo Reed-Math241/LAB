@@ -25,7 +25,8 @@ library(factoextra) # clustering algorithms & visualization
 ```{r}
 nyse_tickers <- read_csv("data-prep/nyse_tickers.csv")
 wsb_dd_submissions <- read_csv("../WSB-viz/www/wsb_dd_submissions.csv")
-View(wsb_dd_submissions)
+merged_common <- read_csv("~/LAB/WSB-viz/www/merged_common.csv")
+
 ```
 
 ```{r}
@@ -96,7 +97,7 @@ mentionedTimes <- userSelectDate2 %>%
   group_by(ticker) %>%
   summarise(count = sum(n))
 
-kmeanData <- merge(sentiment, mentionedTimes, by = "ticker") %>% 
+kmeanData <- merge(sentiment, mentionedTimes, by = "ticker") 
 ```
 
 Plot for page 2
@@ -108,23 +109,35 @@ ggplot(data = kmeanData, aes(x = sentiment, y = count, color = ticker, size = co
 ```{r}
 kmeanDataNum <- kmeanData %>% 
   select(sentiment, count)
+
+df <- kmeanData
+
+df <- na.omit(df)
+
+df <- scale(df)
+head(df)
 ```
 
 kmeans computing and plots
 ```{r}
 ?kmeans
-glimpse(kmeanData)
-k2 <- kmeans(kmeanDataNum, centers = 2, nstart = 25)
-k3 <- kmeans(kmeanDataNum, centers = 3, nstart = 25)
-k4 <- kmeans(kmeanDataNum, centers = 4, nstart = 25)
-k5 <- kmeans(kmeanDataNum, centers = 5, nstart = 25)
+glimpse(df)
+k2 <- kmeans(df, centers = 2, nstart = 25)
+k3 <- kmeans(df, centers = 3, nstart = 25)
+k4 <- kmeans(df, centers = 4, nstart = 25)
+k5 <- kmeans(df, centers = 5, nstart = 25)
 
 # plots to compare
-p1 <- fviz_cluster(k2, geom = "point", data = kmeanDataNum) + ggtitle("k = 2")
-p2 <- fviz_cluster(k3, geom = "point",  data = kmeanDataNum) + ggtitle("k = 3")
-p3 <- fviz_cluster(k4, geom = "point",  data = kmeanDataNum) + ggtitle("k = 4")
-p4 <- fviz_cluster(k5, geom = "point",  data = kmeanDataNum) + ggtitle("k = 5")
-p1
+p1 <- fviz_cluster(k2, geom = "point", data = df) + ggtitle("k = 2")
+p2 <- fviz_cluster(k3, geom = "point",  data = df) + ggtitle("k = 3")
+p3 <- fviz_cluster(k4, geom = "point",  data = df) + ggtitle("k = 4")
+p4 <- fviz_cluster(k5, geom = "point",  data = df) + ggtitle("k = 5")
+p3
+
+set.seed(123)
+final <- kmeans(df, 4, nstart = 10)
+
+fviz_cluster(final, data = df)
 
 library(gridExtra)
 grid.arrange(p1, p2, p3, p4, nrow = 2)
