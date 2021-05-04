@@ -21,5 +21,26 @@ library(tidyverse)
 
 ```{r pressure, echo=FALSE}
 wsb_dd_submissions <- read_csv("Data/wsb_dd_submissions.csv")
+merged_common <- read_csv("Dev/data-prep/merged_common.csv")
+
+```
+
+```{r}
+titles <- wsb_dd_submissions$title_stocks
+posts <- wsb_dd_submissions$post_stocks
+stocks <- c(title, posts)
+
+stocks <- stocks[!is.na(stocks)]
+
+stocks <- paste(stocks, sep = " ")
+
+stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
+
+stocks <- unlist(unique(stocks))
+
+stocks <- stocks[-(0:30)]
+
+merged_common <- merged_common[is.na(match(merged_common$Symbol, stocks)), ]
+
 ```
 
