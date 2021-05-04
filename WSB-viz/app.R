@@ -17,7 +17,7 @@ library(DT)
 
 data <- read_csv("www/wsb_dd_submissions.csv") 
 
-stock_names <- read_csv("www/merged_common.csv")
+tickers <- read_csv("www/tickers.csv")
 
 ###########
 #Functions#
@@ -60,6 +60,10 @@ ui <- fluidPage(
                                                max = "2020-07-31",
                                                start = "2018-08-02",
                                                end = "2020-07-31"),
+                                selectizeInput("titleStocks",
+                                               "Title Stocks: ",
+                                               choices = NULL,
+                                               multiple = TRUE),
                                 sliderInput("titleSentiment", "Title Sentiment:",
                                             min = -20, max = 16,
                                             value = c(-20, 16),
@@ -91,9 +95,10 @@ ui <- fluidPage(
 )
 
 # Define server logic required to draw a histogram
-server <- function(input, output) {
-    updateSelectizeInput(session, 'stockTickers', 
-                         choices = unique(stock_names$Symbol), 
+server <- function(input, output, session) {
+    
+    updateSelectizeInput(session, 'titleStocks', 
+                         choices = unique(tickers$Symbol), 
                          server = TRUE)
     
     output$holder_graph <- renderPlot({

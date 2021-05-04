@@ -100,7 +100,7 @@ stocks <- unlist(unique(stocks))
 
 stocks <- stocks[-(0:30)]
 
-merged_common <- merged_common[is.na(match(merged_common$Symbol, stocks)), ]
+merged_common <- merged_common[!is.na(match(merged_common$Symbol, stocks)), ]
 
 write_csv(merged_common, "WSB-viz/www/tickers.csv")
 
