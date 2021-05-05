@@ -22,8 +22,7 @@ count_and_sent <- function(df){
   
   stocks <- df$title_stocks[!is.na(df$title_stocks)]
   stocks <- paste(stocks, sep = " ")
-  stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
-  stocks <- unlist(stocks)
+  stocks <- unlist(as.list(unlist(strsplit(stocks, '[[:space:]]'))))
   stocks <- stocks[-(0:30)]
   
   grouped <- tibble("stock" = stocks) %>%
