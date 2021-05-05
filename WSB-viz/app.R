@@ -7,6 +7,9 @@ library(tidyverse) # for
 library(bslib) # for theme
 library(stringr) # for string manipulation
 library(DT)
+library(ggrepel)
+
+tickers <- read_csv("www/tickers.csv")
 
 
 count_and_sent <- function(df){
@@ -24,7 +27,6 @@ count_and_sent <- function(df){
         group_by(stock) %>%
         summarise(mentions=n())
     grouped$sentiment <- map_dbl(grouped$stock, sentiment_of_stock)
-    print(grouped)
     return(grouped)
 }
 
@@ -73,12 +75,12 @@ ui <- fluidPage(
                                              min = 1, 
                                              max = 9)
                             ), #end sidebar panel
-                        
-                        mainPanel(
-                            plotOutput("cluster_graph")
-                        )
+                            
+                            mainPanel(
+                                plotOutput("cluster_graph")
+                            )
                         ) # end SIdebar layou
-                        ), #end StockSentiment Clustering panel
+               ), #end StockSentiment Clustering panel
                
                tabPanel("Table",
                         titlePanel("Table"),
@@ -190,25 +192,41 @@ server <- function(input, output, session) {
                    created_utc >= as.Date(input$createRange[1]),
                    created_utc <= as.Date(input$createRange[2])) %>%
             mutate(created_utc = strftime(created_utc, format="%Y-%m-%d %H:%M:%S"))
-            
+        
         
         return(as.data.frame(filtered))
         
     })
     
-
+    
     output$table <- renderDT(table_clean()) # Name of table needed, displays table
     
     output$cluster_graph <- renderPlot({
         data %>%
             mutate(created_utc = strptime(created_utc, format="%s")) %>%
             filter(created_utc >= as.Date(input$clusterCreateRange[1]),
-                created_utc <= as.Date(input$clusterCreateRange[2]),
-                title_sentiment!=0) %>%
+                   created_utc <= as.Date(input$clusterCreateRange[2]),
+                   title_sentiment!=0) %>%
             count_and_sent() %>%
-            #kmeans(centers = input$clusters, nstart = 25)
+            mutate(cluster = as.factor(kmeans(centers = input$clusters, nstart = 25))$cluster) %>% 
             ggplot(aes(mentions, sentiment)) +
-            geom_point()})
+            geom_point() +
+            scale_y_log10()+
+            scale_x_log10()+
+            geom_text_repel(aes(label =stock), size = 3.5)
+        
+        k2 <- kmeans(df, centers = 2, nstart = 25)
+        
+        
+        dfc2 <- kmeanData %>%
+            mutate(cluster = as.factor(k2$cluster))
+        
+        
+        ggplot(data = dfc2, aes(x = sentiment, y = count, color = cluster)) +
+            geom_point() + geom_text_repel(aes(label = ticker), size = 3.5) 
+            
+        
+        })# end of cluster_graph server
 }
 
 # Run the application 
