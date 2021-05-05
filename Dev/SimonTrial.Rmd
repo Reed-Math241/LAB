@@ -80,9 +80,40 @@ Page 2
 
 Data Preparation for page 2
 ```{r}
+library(tidyverse)
+
+wsb_dd_submissions <- read_csv("Data/wsb_dd_submissions.csv")
+
+count_and_sent <- function(df){
+    
+    sentiment_of_stock <- function(ticker){
+        filtered_rows <- df%>%
+            filter(grepl(ticker, title_stocks))
+        print(filtered_rows$title_sentiment)
+        return(mean(filtered_rows$title_sentiment))
+    }
+    stocks <- df$title_stocks[!is.na(df$title_stocks)]
+    stocks <- paste(stocks, sep = " ")
+    stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
+    stocks <- unlist(stocks)
+    grouped <- tibble("stock" = stocks) %>%
+        group_by(stock) %>%
+        summarise(mentions=n())
+    grouped$sentiment <- unlist(map(grouped$stock, sentiment_of_stock))
+    grouped$sentiment[is.nan(grouped$sentiment)] <- 0 
+    return(grouped)
+}
+    
+
 userSelectDate2 <- wsb_dd_submissions %>%
-  filter(date >= as.Date("2021-01-01") & date <= as.Date("2021-01-05")) %>%
-  filter(post_sentiment != 0)
+  mutate(created_utc = strptime(created_utc, format="%s"))%>%
+  filter(created_utc >= as.Date("2021-01-01"),
+         created_utc <= as.Date("2021-01-05"),
+         title_sentiment != 0) %>%
+  count_and_sent()
+  
+
+userSelectDate2
 ```
 
 ```{r}
