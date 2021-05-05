@@ -26,21 +26,35 @@ merged_common <- read_csv("Dev/data-prep/merged_common.csv")
 ```
 
 ```{r}
-titles <- wsb_dd_submissions$title_stocks
-posts <- wsb_dd_submissions$post_stocks
-stocks <- c(title, posts)
 
-stocks <- stocks[!is.na(stocks)]
 
+count_and_sent <- function(df){
+  
+  sentiment_of_stock <- function(ticker){
+    filtered_rows <- df%>%
+      filter(grepl(paste("\\b", ticker, "\\b"), title_stocks))
+    return(mean(filtered_rows$title_sentiment))
+  }
+  
+stocks <- df$title_stocks[!is.na(df$title_stocks)]
 stocks <- paste(stocks, sep = " ")
-
 stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
-
-stocks <- unlist(unique(stocks))
-
+stocks <- unlist(stocks)
 stocks <- stocks[-(0:30)]
 
-merged_common <- merged_common[is.na(match(merged_common$Symbol, stocks)), ]
+grouped <- tibble("stock" = stocks) %>%
+  group_by(stock) %>%
+  summarise(mentions=n())
+
+grouped$sentiment <- unlist(map(grouped$stock, sentiment_of_stock))
+grouped$sentiment[is.nan(grouped$sentiment)] <- 0 
+
+return(grouped)
+}
+
+test <- count_and_sent(wsb_dd_submissions)
+
+
 
 ```
 
