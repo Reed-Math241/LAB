@@ -10,10 +10,9 @@ library(DT)
 
 
 count_and_sent <- function(df){
-    
     sentiment_of_stock <- function(ticker){
         filtered_rows <- df%>%
-            filter(grepl(paste("\\b", ticker, "\\b"), title_stocks))
+            filter(grepl(paste("\\b", ticker, "\\b", sep = ""), title_stocks))
         return(mean(filtered_rows$title_sentiment))
     }
     
@@ -21,12 +20,11 @@ count_and_sent <- function(df){
     stocks <- paste(stocks, sep = " ")
     stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
     stocks <- unlist(stocks)
-    stocks <- stocks[-(0:30)]
     grouped <- tibble("stock" = stocks) %>%
         group_by(stock) %>%
         summarise(mentions=n())
-    grouped$sentiment <- unlist(map(grouped$stock, sentiment_of_stock))
-    grouped$sentiment[is.nan(grouped$sentiment)] <- 0 
+    grouped$sentiment <- map_dbl(grouped$stock, sentiment_of_stock)
+    print(grouped)
     return(grouped)
 }
 
@@ -63,7 +61,7 @@ ui <- fluidPage(
                         titlePanel("Stocks Sentiment Clustering"),
                         sidebarLayout(
                             sidebarPanel(
-                                dateRangeInput("createRange",
+                                dateRangeInput("clusterCreateRange",
                                                "Created Range:",
                                                min = "2018-01-01",
                                                max = "2021-12-31",
@@ -203,8 +201,10 @@ server <- function(input, output, session) {
     
     output$cluster_graph <- renderPlot({
         data %>%
-            filter(created_utc >= as.Date(input$createRange[1]),
-                   created_utc <= as.Date(input$createRange[2])) %>%
+            mutate(created_utc = strptime(created_utc, format="%s")) %>%
+            filter(created_utc >= as.Date(input$clusterCreateRange[1]),
+                created_utc <= as.Date(input$clusterCreateRange[2]),
+                title_sentiment!=0) %>%
             count_and_sent() %>%
             #kmeans(centers = input$clusters, nstart = 25)
             ggplot(aes(mentions, sentiment)) +
