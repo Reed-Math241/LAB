@@ -24,7 +24,6 @@ count_and_sent <- function(df){
         group_by(stock) %>%
         summarise(mentions=n())
     grouped$sentiment <- map_dbl(grouped$stock, sentiment_of_stock)
-    print(grouped)
     return(grouped)
 }
 
