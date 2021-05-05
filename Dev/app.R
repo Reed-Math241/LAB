@@ -1,7 +1,6 @@
 library(shiny)
 library(tidyverse)
 library(DT)
-library(india.air)
 library(shiny) 
 library(lubridate)
 library(cluster)    # clustering algorithms
@@ -9,10 +8,33 @@ library(factoextra)
 library(ggrepel)
 library(readr)
 
+
 wsb_dd_submissions <- read_csv("Dev/WrangledData/wsb_dd_submissions.csv")
 count_ticker <- read_csv("Dev/WrangledData/count_ticker.csv")
 
-
+count_and_sent <- function(df){
+  
+  sentiment_of_stock <- function(ticker){
+    filtered_rows <- df%>%
+      filter(grepl(paste("\\b", ticker, "\\b"), title_stocks))
+    return(mean(filtered_rows$title_sentiment))
+  }
+  
+  stocks <- df$title_stocks[!is.na(df$title_stocks)]
+  stocks <- paste(stocks, sep = " ")
+  stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
+  stocks <- unlist(stocks)
+  stocks <- stocks[-(0:30)]
+  
+  grouped <- tibble("stock" = stocks) %>%
+    group_by(stock) %>%
+    summarise(mentions=n())
+  
+  grouped$sentiment <- unlist(map(grouped$stock, sentiment_of_stock))
+  grouped$sentiment[is.nan(grouped$sentiment)] <- 0 
+  
+  return(grouped)
+}
 
 
 #ui
