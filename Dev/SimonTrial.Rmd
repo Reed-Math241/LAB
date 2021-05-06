@@ -200,18 +200,20 @@ wsb <- wsb_dd_submissions %>%
   select(title_stocks, selftext, created_utc) %>% 
   drop_na() %>% 
   unnest_tokens(word, selftext) %>% 
-  filter(word != "https"& word != "removed" & word != "amp"& word != "1" & word != "2" & word != "3"& word != "4"& word != "x200b" & word != "png"& word != "01" & word != "12" )
+  filter(word != "https"& word != "removed" & word != "amp"& word != "1" & word != "2" & word != "3"& word != "4"& word != "x200b" & word != "png"& word != "01" & word != "12" ) %>% 
+  mutate(TF = grepl("\\d",word)) %>% 
+  filter(TF != TRUE)
 
 
 
  #filter out emojis from text
 wsb_common_words_by_stock <- wsb %>% 
-  filter(title_stocks == "AMC") %>% 
+  filter(title_stocks == "AMZN") %>% 
   anti_join(stop_words, by = c("word" = "word")) %>% 
   count(word) %>% 
   top_n(100)
 
-wordcloud(words = wsb_common_words_by_stock$word, freq = wsb_common_words_by_stock$n, min.freq = 3, max.words=100, random.order=FALSE, rot.per=0.50, colors=brewer.pal(5, "Dark2"))
+wordcloud(words = wsb_common_words_by_stock$word, freq = wsb_common_words_by_stock$n, min.freq = 3, max.words=100, random.order=FALSE, rot.per=0.2, colors=brewer.pal(5, "Dark2"))
 
 
 

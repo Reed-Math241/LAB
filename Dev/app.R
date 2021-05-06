@@ -9,7 +9,7 @@ library(stringr) # for string manipulation
 library(DT)
 library(ggrepel)
 
-tickers <- read_csv("www/tickers.csv")
+tickers <- read_csv("../www/tickers.csv")
 
 
 count_and_sent <- function(df){
