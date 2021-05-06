@@ -200,7 +200,7 @@ wsb <- wsb_dd_submissions %>%
   select(title_stocks, selftext, created_utc) %>% 
   drop_na() %>% 
   unnest_tokens(word, selftext) %>% 
-  filter(word != "https"& word != "removed" & word != "amp"& word != "1" & word != "2" & word != "3"& word != "4"& word != "x200b" & word != "png"& word != "01" & word != "12" ) %>% 
+  filter(word != "https"& word != "removed" & word != "amp" & word != "png" ) %>% 
   mutate(TF = grepl("\\d",word)) %>% 
   filter(TF != TRUE)
 

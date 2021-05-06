@@ -9,6 +9,7 @@ library(stringr) # for string manipulation
 library(DT)
 library(ggrepel)
 library(viridis)
+library(wordcloud) 
 
 tickers <- read_csv("www/tickers.csv")
 
@@ -83,7 +84,8 @@ ui <- fluidPage(
                                              'Cluster count', 
                                              3, 
                                              min = 1, 
-                                             max = 9)
+                                             max = 9),
+                                submitButton("Change Output")
                             ), #end sidebar panel
                             
                             mainPanel(
@@ -110,6 +112,29 @@ ui <- fluidPage(
                             )
                         ) # end Sidebar layou
                ), #end bar plot panel
+               
+               # word cloud plot page
+               tabPanel("Word Cloud",
+                        titlePanel("Key Words Related to a Stock"),
+                        sidebarLayout(
+                            sidebarPanel(
+                                dateRangeInput("barCreateRange",
+                                               "Created Range:",
+                                               min = "2018-01-01",
+                                               max = "2021-12-31",
+                                               start = "2021-04-29",
+                                               end = "2021-05-04"),
+                                selectizeInput("StockTicker",
+                                               "Stock Ticker: ",
+                                               choices = NULL,
+                                               multiple = FALSE),
+                                submitButton("Change Output")
+                            ), #end sidebar panel
+                            mainPanel(
+                                plotOutput("cloud_graph")
+                            )
+                        ) # end Sidebar layou
+               ), #end word cloud plot panel
                
                tabPanel("Table",
                         titlePanel("Table"),
@@ -276,7 +301,7 @@ server <- function(input, output, session) {
             count(ticker) %>%
             get_top10()
         return(as.data.frame(clean_data))
-    }) # end cluster clean
+    }) # end bar data
     
     output$bar_graph <- renderPlot({
         bar_data() %>%
@@ -285,6 +310,39 @@ server <- function(input, output, session) {
             theme_minimal() 
     })
     # End bar Server
+    
+    # Word Cloud Server
+    cloud_data <- reactive({
+        clean_data <- data %>%
+            mutate(created_utc = strptime(created_utc, format="%s")) %>%
+            filter(created_utc >= as.Date(input$clusterCreateRange[1]),
+                   created_utc <= as.Date(input$clusterCreateRange[2])) %>%
+            select(title_stocks, selftext, created_utc) %>% 
+            drop_na() %>% 
+            unnest_tokens(word, selftext) %>% 
+            filter(word != "https"& word != "removed" & word != "amp" & word != "png" ) %>% 
+            mutate(TF = grepl("\\d",word)) %>% 
+            filter(TF != TRUE) %>%
+            filter(title_stocks == input$StockTicker) %>% 
+            anti_join(stop_words, by = c("word" = "word")) %>% 
+            count(word) %>% 
+            top_n(100)
+        return(as.data.frame(clean_data))
+
+    }) # end cloud clean
+    
+    updateSelectizeInput(session, 'StockTicker', 
+                         choices = unique(cloud_data()$title_stocks), 
+                         server = TRUE)
+    
+    output$bar_graph <- renderPlot({
+        cloud_data() %>%
+            wordcloud(words = word, 
+                  freq = n, 
+                  min.freq = 3, max.words=100, random.order=FALSE, 
+                  rot.per=0.2, colors=brewer.pal(5, "Dark2"))
+    })
+    # End Word Cloud Server
 }
 
 # Run the application 
