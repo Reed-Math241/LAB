@@ -8,13 +8,14 @@ library(bslib) # for theme
 library(stringr) # for string manipulation
 library(DT)
 library(ggrepel)
+library(viridis)
 
 tickers <- read_csv("www/tickers.csv")
 
-
+# clustering plot helper function
 count_and_sent <- function(df){
     sentiment_of_stock <- function(ticker){
-        filtered_rows <- df%>%
+        filtered_rows <- df %>%
             filter(grepl(paste("\\b", ticker, "\\b", sep = ""), title_stocks))
         return(mean(filtered_rows$title_sentiment))
     }
@@ -30,6 +31,15 @@ count_and_sent <- function(df){
     return(grouped)
 }
 
+# bar plot helper function
+get_top10 <- function(df){
+    top10 <- df %>%
+        group_by(ticker) %>%
+        summarise(count = sum(n)) %>%
+        arrange(desc(count)) %>%
+        slice(1:10)
+    return(top10)
+}
 
 ######
 #Data#
@@ -59,7 +69,7 @@ ui <- fluidPage(
     
     # Application title
     navbarPage("WSB DD dashboard: [PUN HERE]",
-               tabPanel("Stocks Sentiment Clustering",
+               tabPanel("Stock Sentiment",
                         titlePanel("Stocks Sentiment Clustering"),
                         sidebarLayout(
                             sidebarPanel(
@@ -79,8 +89,27 @@ ui <- fluidPage(
                             mainPanel(
                                 plotOutput("cluster_graph")
                             )
-                        ) # end SIdebar layou
-               ), #end StockSentiment Clustering panel
+                        ) # end SIdebar layout
+               ), # End StockSentiment Clustering panel
+               
+               # bar plot page
+               tabPanel("Popular Stocks",
+                        titlePanel("Most Discussed Stocks"),
+                        sidebarLayout(
+                            sidebarPanel(
+                                dateRangeInput("barCreateRange",
+                                               "Created Range:",
+                                               min = "2018-01-01",
+                                               max = "2021-12-31",
+                                               start = "2021-04-29",
+                                               end = "2021-05-04"),
+                                submitButton("Change Output")
+                            ), #end sidebar panel
+                            mainPanel(
+                                plotOutput("bar_graph")
+                            )
+                        ) # end Sidebar layou
+               ), #end bar plot panel
                
                tabPanel("Table",
                         titlePanel("Table"),
@@ -134,16 +163,16 @@ ui <- fluidPage(
                                 )
                             )
                             
-                        ) #End navbar page
-               )
+                        ) #End sidebarLayout
+               ) # End table page
                
-    )
-)
+    ) # End navbar Page
+) # End fluid Page
 
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
-    
+    # Table server
     updateSelectizeInput(session, 'titleStocks', 
                          choices = tickers$Symbol, 
                          server = TRUE)
@@ -198,9 +227,10 @@ server <- function(input, output, session) {
         
     })
     
-    
     output$table <- renderDT(table_clean()) # Name of table needed, displays table
+    # End Table server
     
+    # Sentiment server
     cluster_clean <- reactive({
         clean_data <- data %>%
             mutate(created_utc = strptime(created_utc, format="%s")) %>%
@@ -226,9 +256,35 @@ server <- function(input, output, session) {
             geom_point() +
             scale_y_log10()+
             scale_x_log10()+
-            geom_text_repel(aes(label =stock), size = 3.5)
+            geom_text_repel(aes(label =stock), size = 3.5) +
+            xlab("mentioned times") +
+            theme_minimal() 
 
-        })# end of cluster_graph server
+        }) # end of cluster_graph server
+    # End Sentiment Server
+    
+    # bar Server
+    bar_data <- reactive({
+        clean_data <- data %>%
+            mutate(created_utc = strptime(created_utc, format="%s")) %>%
+            filter(created_utc >= as.Date(input$clusterCreateRange[1]),
+                   created_utc <= as.Date(input$clusterCreateRange[2])) %>%
+            mutate(ticker=strsplit(title_stocks, " ")) %>% 
+            unnest(ticker) %>% 
+            drop_na(ticker) %>%
+            group_by(created_utc) %>%
+            count(ticker) %>%
+            get_top10()
+        return(as.data.frame(clean_data))
+    }) # end cluster clean
+    
+    output$bar_graph <- renderPlot({
+        bar_data() %>%
+            ggplot(aes(x = ticker, y = count, fill = count)) + 
+            geom_col() +
+            theme_minimal() 
+    })
+    # End bar Server
 }
 
 # Run the application 

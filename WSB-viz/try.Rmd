@@ -1,0 +1,44 @@
+---
+title: "try"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data <- read_csv("www/wsb_dd_submissions.csv") 
+tickers <- read_csv("www/tickers.csv")
+```
+
+```{r}
+
+get_top10 <- function(df){
+  top10 <- df %>%
+    group_by(ticker) %>%
+    summarise(count = sum(n)) %>%
+    arrange(desc(count)) %>%
+    slice(1:10)
+  return(top10)
+}
+
+count_data <- data %>%
+  mutate(created_utc = strptime(created_utc, format="%s")) %>%
+  filter(created_utc >= as.Date("2021-01-01") & created_utc <= as.Date("2021-05-07")) %>%
+  mutate(ticker=strsplit(title_stocks, " ")) %>% 
+  unnest(ticker) %>% 
+  drop_na(ticker) %>%
+  group_by(created_utc) %>%
+  count(ticker) %>%
+  get_top10()
+
+library(viridis)
+ggplot(count_data, aes(x = ticker, y = count, fill = count)) + 
+  geom_col() +
+  theme_minimal() 
+  
+
+
+
+```
