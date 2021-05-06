@@ -189,7 +189,39 @@ ui <- fluidPage(
                             )
                             
                         ) #End sidebarLayout
-               ) # End table page
+               ), # End table page
+               tabPanel(
+                   "Developers & Sources",
+                   tags$p(
+                       "This app was created by",
+                       tags$a("Taylor Blair",
+                              href = "https://github.com/Goodernews",
+                              taget = "_blank"),
+                       ",  ",
+                       tags$a("Jiarong Li",
+                              href = "https://github.com/jialicatherine",
+                              taget = "_blank"),
+                       ", and",
+                       tags$a("Sung Bum (Simon) Ahn",
+                              href = "https://github.com/ahnsb5117",
+                              taget = "_blank"),
+                       "as a final project for Math 241: Data Science at Reed College in Spring 2021.
+      The goal of this app is to allow Wall Street Bets enthusiasts to explore and visualize their stocks."
+                   ),
+                   tags$p(
+                       "The data used for this app was primarily pulled and scraped from",
+                       tags$a("Wall Street Bets Due Diligence(DD),",
+                              href = "https://www.reddit.com/r/wallstreetbets/?f=flair_name%3A%22DD%22",
+                              target = "_blank"),
+                       "and tools were used from packages such as",
+                       tags$code("bslib"),
+                       ", ",
+                       tags$code("wordcloud"),
+                       ", and",
+                       tags$code("tidyverse"),
+                       ".  The app was last updated in Spring 2021"
+                   )
+               )
                
     ) # End navbar Page
 ) # End fluid Page
@@ -310,36 +342,39 @@ server <- function(input, output, session) {
             theme_minimal() 
     })
     # End bar Server
-    
+
     # Word Cloud Server
     cloud_data <- reactive({
         clean_data <- data %>%
             mutate(created_utc = strptime(created_utc, format="%s")) %>%
             filter(created_utc >= as.Date(input$clusterCreateRange[1]),
                    created_utc <= as.Date(input$clusterCreateRange[2])) %>%
-            select(title_stocks, selftext, created_utc) %>% 
-            drop_na() %>% 
-            unnest_tokens(word, selftext) %>% 
-            filter(word != "https"& word != "removed" & word != "amp" & word != "png" ) %>% 
-            mutate(TF = grepl("\\d",word)) %>% 
+            select(title_stocks, selftext, created_utc) %>%
+            drop_na() %>%
+            unnest_tokens(word, selftext) %>%
+            filter(word != "https"& word != "removed" & word != "amp" & word != "png" ) %>%
+            mutate(TF = grepl("\\d",word)) %>%
             filter(TF != TRUE) %>%
-            filter(title_stocks == input$StockTicker) %>% 
-            anti_join(stop_words, by = c("word" = "word")) %>% 
-            count(word) %>% 
+            filter(title_stocks == input$StockTicker) %>%
+            anti_join(stop_words, by = c("word" = "word")) %>%
+            count(word) %>%
             top_n(100)
         return(as.data.frame(clean_data))
 
     }) # end cloud clean
-    
-    updateSelectizeInput(session, 'StockTicker', 
-                         choices = unique(cloud_data()$title_stocks), 
+
+    updateSelectizeInput(session, 'StockTicker',
+                         choices = unique(cloud_data()$title_stocks),
                          server = TRUE)
-    
-    output$bar_graph <- renderPlot({
+
+    wordcloud_rep <- repeatable(wordcloud)
+
+    output$cloud_graph <- renderPlot({
+        v <- cloud_data()
         cloud_data() %>%
-            wordcloud(words = word, 
-                  freq = n, 
-                  min.freq = 3, max.words=100, random.order=FALSE, 
+            wordcloud(names(v), v, scale=c(4,0.5),
+                  freq = n,
+                  min.freq = 3, max.words=100, random.order=FALSE,
                   rot.per=0.2, colors=brewer.pal(5, "Dark2"))
     })
     # End Word Cloud Server
