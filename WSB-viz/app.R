@@ -358,23 +358,20 @@ server <- function(input, output, session) {
             filter(title_stocks == input$StockTicker) %>%
             anti_join(stop_words, by = c("word" = "word")) %>%
             count(word) %>%
-            top_n(100)
+            arrange(desc(n)) %>%
+            slice(1:100)
         return(as.data.frame(clean_data))
 
     }) # end cloud clean
 
     updateSelectizeInput(session, 'StockTicker',
-                         choices = unique(cloud_data()$title_stocks),
+                         choices = unique(tickers$Symbol),
                          server = TRUE)
 
-    wordcloud_rep <- repeatable(wordcloud)
-
     output$cloud_graph <- renderPlot({
-        v <- cloud_data()
-        cloud_data() %>%
-            wordcloud(names(v), v, scale=c(4,0.5),
-                  freq = n,
-                  min.freq = 3, max.words=100, random.order=FALSE,
+            wordcloud(words=cloud_data()$word,
+                  freq = cloud_data()$n,
+                  min.freq = 20, max.words=10, random.order=FALSE,
                   rot.per=0.2, colors=brewer.pal(5, "Dark2"))
     })
     # End Word Cloud Server
