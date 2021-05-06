@@ -209,8 +209,8 @@ ui <- fluidPage(
       The goal of this app is to allow Wall Street Bets enthusiasts to explore and visualize their stocks."
                    ),
                    tags$p(
-                       "The data used for this app was primarily pulled and scraped from",
-                       tags$a("Wall Street Bets Due Diligence(DD),",
+                       "The data used for this app was primarily pulled and scraped from Reddit subreddit",
+                       tags$a("r/wallstreetbets Due Diligence(DD),",
                               href = "https://www.reddit.com/r/wallstreetbets/?f=flair_name%3A%22DD%22",
                               target = "_blank"),
                        "and tools were used from packages such as",
