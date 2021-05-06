@@ -20,7 +20,9 @@ library(lubridate)
 library(anytime)
 library(cluster)    # clustering algorithms
 library(factoextra)
-library(ggrepel)# clustering algorithms & visualization
+library(ggrepel)
+library(rvest)
+library(httr)# clustering algorithms & visualization
 ```
 
 ```{r}
@@ -178,4 +180,39 @@ fviz_cluster(final, data = df)
 
 library(gridExtra)
 grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
+
+```{r}
+pbr <- getSymbols("PBR", src = "yahoo", from = "2013-01-01", to = "2017-06-01", auto.assign = FALSE)
+pbr <- read.csv("PBR.csv")
+pbr[,1] <- as.Date(pbr[,1])
+pbr <- xts(pbr)
+pbr <- pbr[,-1]
+```
+
+
+#wordcloud
+```{r}
+
+library(wordcloud) 
+
+wsb <- wsb_dd_submissions %>%
+  select(title_stocks, selftext, created_utc) %>% 
+  drop_na() %>% 
+  unnest_tokens(word, selftext) %>% 
+  filter(word != "https"& word != "removed" & word != "amp"& word != "1" & word != "2" & word != "3"& word != "4"& word != "x200b" & word != "png"& word != "01" & word != "12" )
+
+
+
+ #filter out emojis from text
+wsb_common_words_by_stock <- wsb %>% 
+  filter(title_stocks == "AMC") %>% 
+  anti_join(stop_words, by = c("word" = "word")) %>% 
+  count(word) %>% 
+  top_n(100)
+
+wordcloud(words = wsb_common_words_by_stock$word, freq = wsb_common_words_by_stock$n, min.freq = 3, max.words=100, random.order=FALSE, rot.per=0.50, colors=brewer.pal(5, "Dark2"))
+
+
+
 ```
