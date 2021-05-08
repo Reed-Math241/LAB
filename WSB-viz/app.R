@@ -72,20 +72,20 @@ ui <- fluidPage(
     
     
     # Application title
-    navbarPage("WSB DD dashboard: [PUN HERE]",
+    navbarPage("WSB DD dashboard: STONKS ONLY GO UP",
                tabPanel("Stock Sentiment",
-                        titlePanel("Stocks Sentiment Clustering"),
+                        titlePanel("Stocks Sentiment Cluster"),
                         sidebarLayout(
                             sidebarPanel(
                                 dateRangeInput("clusterCreateRange",
                                                "Created Range:",
                                                min = "2018-01-01",
                                                max = "2021-12-31",
-                                               start = "2021-04-29",
+                                               start = "2021-04-04",
                                                end = "2021-05-04"),
                                 numericInput('clusters', 
                                              'Cluster count', 
-                                             3, 
+                                             4, 
                                              min = 1, 
                                              max = 9),
                                 submitButton("Change Output")
@@ -118,15 +118,16 @@ ui <- fluidPage(
                
                # word cloud plot page
                tabPanel("Word Cloud",
-                        titlePanel("Key Words Related to a Stock"),
+                        titlePanel("Stock Key Words"),
                         sidebarLayout(
                             sidebarPanel(
                                 dateRangeInput("cloudCreateRange",
                                                "Created Range:",
                                                min = "2018-01-01",
                                                max = "2021-12-31",
-                                               start = "2021-04-28",
+                                               start = "2021-03-28",
                                                end = "2021-04-29"),
+                                submitButton("Change Range"),
                                 selectizeInput("StockTicker",
                                                "Stock Ticker: ",
                                                choices = NULL,
@@ -384,7 +385,7 @@ server <- function(input, output, session) {
     output$cloud_graph <- renderPlot({
             wordcloud(words=cloud_data2()$word,
                   freq = cloud_data2()$n,
-                  min.freq = 20, max.words=10, random.order=FALSE,
+                  min.freq = 1, max.words=20, random.order=FALSE,
                   rot.per=0.2, colors=brewer.pal(5, "Dark2"))
     })
     # End Word Cloud Server
