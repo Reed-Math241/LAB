@@ -12,6 +12,24 @@ library(viridis)
 library(wordcloud) 
 library(tidytext)
 
+
+
+######
+#Data#
+######
+
+#Section to read in data
+
+data <- read_csv("www/wsb_dd_submissions.csv") %>%
+    mutate(created_utc = strptime(created_utc, format="%s"))
+
+tickers <- read_csv("www/tickers.csv")
+
+###########
+#Functions#
+###########
+
+
 # clustering plot helper function
 count_and_sent <- function(df){
     sentiment_of_stock <- function(ticker){
@@ -41,21 +59,25 @@ get_top10 <- function(df){
     return(top10)
 }
 
-######
-#Data#
-######
 
-#Section to read in data
+pivot_sector <- function(df, input_col, output_col){
+    df <- df %>%
+        select(input_col, output_col) #grabs two target columns
+    df <- df[!(is.na(df[[input_col]]) | df[[input_col]]==""), ] #removes empty rows
+    df <- separate_rows(df, `input_col`, sep=" ") # seperates out if multiple stocks
+    
+    stocks <- str_c("\\b", tickers$Symbol, "\\b", collapse="|") #makes a regex of all stocks
+    
+    df$sector <- str_replace_all(df[[input_col]], stocks, ticker_to_field) #replaces stocks with sectors
+    
+    
+    return(df[c("sector", output_col)]) #returns target and sector
+}
 
-data <- read_csv("www/wsb_dd_submissions.csv") %>%
-    mutate(created_utc = strptime(created_utc, format="%s"))
 
-tickers <- read_csv("www/tickers.csv")
-
-###########
-#Functions#
-###########
-
+#############
+#Application#
+#############
 
 ui <- fluidPage(
     
@@ -69,6 +91,7 @@ ui <- fluidPage(
     
     
     # Application title
+
     navbarPage("WSB DD dashboard: STONKS ONLY GO UP",
                tabPanel("Stock Sentiment",
                         titlePanel("Stocks Sentiment Cluster"),
@@ -133,6 +156,36 @@ ui <- fluidPage(
                             ), #end sidebar panel
                             mainPanel(
                                 plotOutput("cloud_graph")
+                            )
+                        ) # end Sidebar layou
+               ), #end word cloud plot panel
+               
+               tabPanel("Sector Sentiment",
+                        titlePanel("Sector Sentiment"),
+                        sidebarLayout(
+                            sidebarPanel(
+                                dateRangeInput("sectorCreateRange",
+                                               "Created Range:",
+                                               min = "2018-01-01",
+                                               max = "2021-12-31",
+                                               start = "2021-01-01",
+                                               end = "2021-04-29"),
+                                selectInput("tickersFrom",
+                                             "Tickers from: ",
+                                            c("Selftext" = "post_stocks",
+                                              "Title" = "title_stocks"),
+                                            selected = "title_stocks"),
+                                selectInput("sentimentOut",
+                                            "Sentiment based on: ",
+                                            c("Title Sentiment" = "title_sentiment", 
+                                              "Post Sentiment" = "post_sentiment", 
+                                              "Score" = "score", 
+                                              "Number of Comments" = "num_comments", 
+                                              "Number of Awards" = "count_awards"),
+                                            selected = "title_sentiment")
+                            ), #end sidebar panel
+                            mainPanel(
+                                plotOutput("sector_graph")
                             )
                         ) # end Sidebar layou
                ), #end word cloud plot panel
@@ -243,8 +296,7 @@ server <- function(input, output, session) {
     
     table_clean <- reactive({
         filtered <- data %>%
-            subset(select=-c(permalink, coin_awards, num_comments)) %>%
-            mutate(created_utc = strptime(created_utc, format="%s"))
+            subset(select=-c(permalink, coin_awards, num_comments))
         
         if(length(input$titleStocks)>0){ #filters title stocks
             input_regex_clean <- str_c("\\b", input$titleStocks, "\\b")
@@ -291,7 +343,6 @@ server <- function(input, output, session) {
     # Sentiment server
     cluster_clean <- reactive({
         clean_data <- data %>%
-            mutate(created_utc = strptime(created_utc, format="%s")) %>%
             filter(created_utc >= as.Date(input$clusterCreateRange[1]),
                    created_utc <= as.Date(input$clusterCreateRange[2]),
                    title_sentiment!=0) %>%
@@ -324,7 +375,6 @@ server <- function(input, output, session) {
     # bar Server
     bar_data <- reactive({
         clean_data <- data %>%
-            mutate(created_utc = strptime(created_utc, format="%s")) %>%
             filter(created_utc >= as.Date(input$clusterCreateRange[1]),
                    created_utc <= as.Date(input$clusterCreateRange[2])) %>%
             mutate(ticker=strsplit(title_stocks, " ")) %>% 
