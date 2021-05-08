@@ -382,15 +382,9 @@ server <- function(input, output, session) {
     }) # end cloud clean
     
     output$cloud_graph <- renderPlot({
-<<<<<<< HEAD
             wordcloud(words=cloud_data2()$word,
                   freq = cloud_data2()$n,
                   min.freq = 20, max.words=10, random.order=FALSE,
-=======
-            wordcloud(words=cloud_data()$word,
-                  freq = cloud_data()$n,
-                  min.freq = 1, max.words=300, random.order=FALSE,
->>>>>>> 73d67857f3d5e8b86d160bd9e5d689d095539bb0
                   rot.per=0.2, colors=brewer.pal(5, "Dark2"))
     })
     # End Word Cloud Server
