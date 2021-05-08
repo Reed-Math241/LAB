@@ -10,6 +10,7 @@ library(DT)
 library(ggrepel)
 library(viridis)
 library(wordcloud) 
+library(tidytext)
 
 tickers <- read_csv("www/tickers.csv")
 
@@ -352,7 +353,7 @@ server <- function(input, output, session) {
             select(title_stocks, selftext, created_utc) %>%
             drop_na() %>%
             unnest_tokens(word, selftext) %>%
-            filter(word != "https"& word != "removed" & word != "amp" & word != "png" ) %>%
+            filter(word != "https"& word != "removed" & word != "amp" & word != "png" & word != "jpg" & word != "pjpg" & word != "preview.redd.it" & word != "webp" & word != "auto" ) %>%
             mutate(TF = grepl("\\d",word)) %>%
             filter(TF != TRUE) %>%
             filter(title_stocks == input$StockTicker) %>%
@@ -371,7 +372,7 @@ server <- function(input, output, session) {
     output$cloud_graph <- renderPlot({
             wordcloud(words=cloud_data()$word,
                   freq = cloud_data()$n,
-                  min.freq = 20, max.words=10, random.order=FALSE,
+                  min.freq = 1, max.words=300, random.order=FALSE,
                   rot.per=0.2, colors=brewer.pal(5, "Dark2"))
     })
     # End Word Cloud Server
