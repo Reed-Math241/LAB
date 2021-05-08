@@ -359,7 +359,7 @@ server <- function(input, output, session) {
             select(ticker, selftext, created_utc) %>%
             drop_na() %>%
             unnest_tokens(word, selftext) %>%
-            filter(word != "https"& word != "removed" & word != "amp" & word != "png" & word != "jpg" & word != "pjpg" & word != "preview.redd.it" & word != "webp" & word != "auto" ) %>%
+            filter(word != "https"& word != "removed" & word != "amp" & word != "png" & word != "jpg" & word != "pjpg" & word != "preview.redd.it" & word != "webp" & word != "auto" & word != "width" & word != "format" & word != "auto") %>%
             mutate(TF = grepl("\\d",word)) %>%
             filter(TF != TRUE)
         return(clean_data)
@@ -384,8 +384,8 @@ server <- function(input, output, session) {
     output$cloud_graph <- renderPlot({
             wordcloud(words=cloud_data2()$word,
                   freq = cloud_data2()$n,
-                  min.freq = 1, max.words=20, random.order=FALSE,
-                  rot.per=0.2, colors=brewer.pal(5, "Dark2"))
+                  min.freq = 1, max.words=50, random.order=FALSE,
+                  rot.per=0.2, colors=brewer.pal(5, "Dark2"), scale=c(3,0.01))
     })
     # End Word Cloud Server
 }
