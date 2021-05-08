@@ -32,41 +32,27 @@ merged_common <- read_csv("Dev/data-prep/merged_common.csv")
 ```{r}
 
 ticker_to_field <- function(ticker){
-  sector <- match(ticker, merged_common$Symbol)
-  sector <- merged_common$Sector[sector]
-  if (is.na(sector)){
-    return("Other")
-  }
-  return(sector)
+    sector <- match(ticker, tickers$Symbol)
+    sector <- tickers$Sector[sector]
+    if (is.na(sector)){
+        return("Other")
+    }
+    return(sector)
 }
 
-replace_field <- function(df){
-  # input_col <- enquos(input_col)
-  # output_col <- enquos(output_col)
-  
-  df <- df %>%
-    select(title_stocks, score)
-  df <- df[!(is.na(df$title_stocks) | df$title_stocks==""), ]
-  df <- separate_rows(df, title_stocks, sep=" ")
-  
-  # stocks <- df$input_col[!is.na(df$input_col)]
-  # stocks <- paste(stocks, sep = " ")
-  # stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
-  # stocks <- unique(unlist(stocks)) #unique list of stocks
-  
-
-  stocks <- str_c("\\b", merged_common$Symbol, "\\b", collapse="|")
-  
-  df$sector <- str_replace_all(df$title_stocks, stocks, ticker_to_field)
-  df <- df %>%
-    select(-title_stocks)
-
-
-  return(df)
+pivot_sector <- function(df, input_col, output_col){
+    df <- df %>%
+        select(input_col, output_col) #grabs two target columns
+    df <- df[!(is.na(df[[input_col]]) | df[[input_col]]==""), ] #removes empty rows
+    df <- separate_rows(df, `input_col`, sep=" ") # seperates out if multiple stocks
+    
+    stocks <- str_c("\\b", tickers$Symbol, "\\b", collapse="|") #makes a regex of all stocks
+    
+    df$sector <- str_replace_all(df[[input_col]], stocks, ticker_to_field) #replaces stocks with sectors
+    
+    return(df[c("sector", output_col)]) #returns target and sector
 }
 
-
-test <- replace_field(head(wsb_dd_submissions, 1000))#, title_stocks, score)
 
 ```
 

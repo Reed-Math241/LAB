@@ -60,6 +60,14 @@ get_top10 <- function(df){
 }
 
 
+ticker_to_field <- function(ticker){
+    sector <- match(ticker, tickers$Symbol, nomatch = -1)
+    if (sector==-1){
+        return("Other")
+    }
+    return(tickers$Sector[sector])
+}
+
 pivot_sector <- function(df, input_col, output_col){
     df <- df %>%
         select(input_col, output_col) #grabs two target columns
@@ -70,6 +78,7 @@ pivot_sector <- function(df, input_col, output_col){
     
     df$sector <- str_replace_all(df[[input_col]], stocks, ticker_to_field) #replaces stocks with sectors
     
+    #df <- df[df$sector %in% c("Other", unique(tickers$Sector))]
     
     return(df[c("sector", output_col)]) #returns target and sector
 }
@@ -394,10 +403,21 @@ server <- function(input, output, session) {
     })
     # End bar Server
 
-    # Word Cloud Server
-#    updateSelectizeInput(session, 'StockTicker',
-#                         choices = (unique(tickers$Symbol)),
-#                        server = TRUE)
+    output$sector_graph <- renderPlot({
+        data %>%
+            filter(created_utc >= as.Date(input$sectorCreateRange[1]),
+                   created_utc <= as.Date(input$sectorCreateRange[2])) %>%
+            pivot_sector(input$tickersFrom, input$sentimentOut) %>%
+            ggplot(aes(x=sector, y=!!input$sentimentOut)) +
+            coord_flip() +
+            geom_boxplot(outlier.shape=NA) +
+            geom_jitter(width = 0.25, alpha = 0.3) +
+            labs(y=input$sentimentOut, 
+                 x="Sector")#, 
+                 #title = paste(input$sentimentOut, "based on", input$tickersFrom))
+            
+        
+    })
     
     cloud_data <- reactive({
         clean_data <- data %>%
