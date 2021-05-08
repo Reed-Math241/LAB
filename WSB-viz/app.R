@@ -51,6 +51,8 @@ get_top10 <- function(df){
 
 data <- read_csv("www/wsb_dd_submissions.csv") 
 
+parsed_data <- read_csv("www/parsed_wsb.csv")
+
 tickers <- read_csv("www/tickers.csv")
 
 ###########
@@ -119,12 +121,12 @@ ui <- fluidPage(
                         titlePanel("Key Words Related to a Stock"),
                         sidebarLayout(
                             sidebarPanel(
-                                dateRangeInput("barCreateRange",
+                                dateRangeInput("cloudCreateRange",
                                                "Created Range:",
                                                min = "2018-01-01",
                                                max = "2021-12-31",
-                                               start = "2021-04-29",
-                                               end = "2021-05-04"),
+                                               start = "2021-04-28",
+                                               end = "2021-04-29"),
                                 selectizeInput("StockTicker",
                                                "Stock Ticker: ",
                                                choices = NULL,
@@ -232,10 +234,10 @@ ui <- fluidPage(
 server <- function(input, output, session) {
     # Table server
     updateSelectizeInput(session, 'titleStocks', 
-                         choices = tickers$Symbol, 
+                         choices = unique(tickers$Symbol), 
                          server = TRUE)
     updateSelectizeInput(session, 'postStocks', 
-                         choices = tickers$Symbol, 
+                         choices = unique(tickers$Symbol), 
                          server = TRUE)
     updateSelectizeInput(session, 'author', 
                          choices = unique(data$author), 
@@ -345,34 +347,44 @@ server <- function(input, output, session) {
     # End bar Server
 
     # Word Cloud Server
+#    updateSelectizeInput(session, 'StockTicker',
+#                         choices = (unique(tickers$Symbol)),
+#                        server = TRUE)
+    
     cloud_data <- reactive({
-        clean_data <- data %>%
+        clean_data <- parsed_data %>%
             mutate(created_utc = strptime(created_utc, format="%s")) %>%
-            filter(created_utc >= as.Date(input$clusterCreateRange[1]),
-                   created_utc <= as.Date(input$clusterCreateRange[2])) %>%
-            select(title_stocks, selftext, created_utc) %>%
+            filter(created_utc >= as.Date(input$cloudCreateRange[1]),
+                   created_utc <= as.Date(input$cloudCreateRange[2])) %>%
+            select(ticker, selftext, created_utc) %>%
             drop_na() %>%
             unnest_tokens(word, selftext) %>%
             filter(word != "https"& word != "removed" & word != "amp" & word != "png" & word != "jpg" & word != "pjpg" & word != "preview.redd.it" & word != "webp" & word != "auto" ) %>%
             mutate(TF = grepl("\\d",word)) %>%
-            filter(TF != TRUE) %>%
-            filter(title_stocks == input$StockTicker) %>%
-            anti_join(stop_words, by = c("word" = "word")) %>%
-            count(word) %>%
-            arrange(desc(n)) %>%
-            slice(1:100)
-        return(as.data.frame(clean_data))
-
+            filter(TF != TRUE)
+        return(clean_data)
     }) # end cloud clean
-
-    updateSelectizeInput(session, 'StockTicker',
-                         choices = unique(tickers$Symbol),
+    
+    observeEvent(input$cloudCreateRange, {
+      updateSelectizeInput(session, 'StockTicker',
+                         choices = as.character(unique(cloud_data()$ticker)),
                          server = TRUE)
-
+    })
+    
+    cloud_data2 <- reactive({
+        clean_data <- cloud_data() %>%
+          filter(ticker == input$StockTicker) %>%
+          anti_join(stop_words, by = c("word" = "word")) %>%
+          count(word) %>%
+          arrange(desc(n)) %>%
+          slice(1:50)
+        return(as.data.frame(clean_data))
+    }) # end cloud clean
+    
     output$cloud_graph <- renderPlot({
-            wordcloud(words=cloud_data()$word,
-                  freq = cloud_data()$n,
-                  min.freq = 1, max.words=300, random.order=FALSE,
+            wordcloud(words=cloud_data2()$word,
+                  freq = cloud_data2()$n,
+                  min.freq = 20, max.words=10, random.order=FALSE,
                   rot.per=0.2, colors=brewer.pal(5, "Dark2"))
     })
     # End Word Cloud Server

@@ -203,7 +203,14 @@ wsb1 <- wsb_dd_submissions %>%
   unnest_tokens(word, selftext) %>% 
   filter(word != "https"& word != "removed" & word != "amp" & word != "png" ) %>% 
   mutate(TF = grepl("\\d",word)) %>% 
+<<<<<<< HEAD
   filter(TF != TRUE) %>% 
+=======
+  filter(TF != TRUE) 
+
+wsb %>%
+  filter(title_stocks == "AMZN") %>% 
+>>>>>>> 9c00b8d540375472ac6965f33789fe032b15d392
   anti_join(stop_words, by = c("word" = "word")) %>% 
   count(word) %>% 
 
