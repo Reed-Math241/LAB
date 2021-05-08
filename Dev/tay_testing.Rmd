@@ -58,3 +58,22 @@ test <- count_and_sent(wsb_dd_submissions)
 
 ```
 
+```{r}
+library(openair)
+library(lubridate)
+
+wsb_dd_submissions <- read_csv("Data/wsb_dd_submissions.csv")
+
+
+wsb_dd_submissions %>%
+  mutate(created_utc = as.POSIXct(strptime(created_utc, format="%s")),
+         created_utc = floor_date(created_utc, unit="day")) %>%
+  group_by(created_utc) %>%
+  summarise(posts = n()) %>%
+  rename(date=created_utc) %>%
+  calendarPlot(main = "Posts per day",
+               pollutant = "posts")
+
+
+```
+
