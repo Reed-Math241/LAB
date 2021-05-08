@@ -388,7 +388,7 @@ server <- function(input, output, session) {
     
     output$bar_graph <- renderPlot({
         bar_data() %>%
-            ggplot(aes(x = ticker, y = count, fill = count)) + 
+            ggplot(aes(x = reorder(ticker, -count), y = count, fill = count)) + 
             geom_col() +
             theme_minimal() 
     })
