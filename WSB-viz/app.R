@@ -12,8 +12,6 @@ library(viridis)
 library(wordcloud) 
 library(tidytext)
 
-tickers <- read_csv("www/tickers.csv")
-
 # clustering plot helper function
 count_and_sent <- function(df){
     sentiment_of_stock <- function(ticker){
@@ -49,9 +47,8 @@ get_top10 <- function(df){
 
 #Section to read in data
 
-data <- read_csv("www/wsb_dd_submissions.csv") 
-
-parsed_data <- read_csv("www/parsed_wsb.csv")
+data <- read_csv("www/wsb_dd_submissions.csv") %>%
+    mutate(created_utc = strptime(created_utc, format="%s"))
 
 tickers <- read_csv("www/tickers.csv")
 
@@ -235,10 +232,10 @@ ui <- fluidPage(
 server <- function(input, output, session) {
     # Table server
     updateSelectizeInput(session, 'titleStocks', 
-                         choices = unique(tickers$Symbol), 
+                         choices = tickers$Symbol, 
                          server = TRUE)
     updateSelectizeInput(session, 'postStocks', 
-                         choices = unique(tickers$Symbol), 
+                         choices = tickers$Symbol, 
                          server = TRUE)
     updateSelectizeInput(session, 'author', 
                          choices = unique(data$author), 
@@ -353,10 +350,12 @@ server <- function(input, output, session) {
 #                        server = TRUE)
     
     cloud_data <- reactive({
-        clean_data <- parsed_data %>%
-            mutate(created_utc = strptime(created_utc, format="%s")) %>%
+        clean_data <- data %>%
             filter(created_utc >= as.Date(input$cloudCreateRange[1]),
-                   created_utc <= as.Date(input$cloudCreateRange[2])) %>%
+                   created_utc <= as.Date(input$cloudCreateRange[2]),
+                   !is.na(post_stocks)) %>%
+            mutate(ticker=strsplit(title_stocks, " ")) %>% 
+            unnest(ticker) %>% 
             select(ticker, selftext, created_utc) %>%
             drop_na() %>%
             unnest_tokens(word, selftext) %>%
