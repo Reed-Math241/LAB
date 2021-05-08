@@ -62,7 +62,7 @@ get_top10 <- function(df){
 
 ticker_to_field <- function(ticker){
     sector <- match(ticker, tickers$Symbol, nomatch = -1)
-    if (sector==-1){
+    if (sector==-1||is.na(tickers$Sector[sector]) ){
         return("Other")
     }
     return(tickers$Sector[sector])
@@ -177,7 +177,7 @@ ui <- fluidPage(
                                                "Created Range:",
                                                min = "2018-01-01",
                                                max = "2021-12-31",
-                                               start = "2021-01-01",
+                                               start = "2021-04-01",
                                                end = "2021-04-29"),
                                 selectInput("tickersFrom",
                                              "Tickers from: ",
@@ -191,7 +191,8 @@ ui <- fluidPage(
                                               "Score" = "score", 
                                               "Number of Comments" = "num_comments", 
                                               "Number of Awards" = "count_awards"),
-                                            selected = "title_sentiment")
+                                            selected = "title_sentiment"),
+                                submitButton("Change Output")
                             ), #end sidebar panel
                             mainPanel(
                                 plotOutput("sector_graph")
@@ -408,13 +409,12 @@ server <- function(input, output, session) {
             filter(created_utc >= as.Date(input$sectorCreateRange[1]),
                    created_utc <= as.Date(input$sectorCreateRange[2])) %>%
             pivot_sector(input$tickersFrom, input$sentimentOut) %>%
-            ggplot(aes(x=sector, y=!!input$sentimentOut)) +
+            ggplot(aes_string(x="sector", y=input$sentimentOut)) +
             coord_flip() +
-            geom_boxplot(outlier.shape=NA) +
+            geom_boxplot() +
             geom_jitter(width = 0.25, alpha = 0.3) +
             labs(y=input$sentimentOut, 
-                 x="Sector")#, 
-                 #title = paste(input$sentimentOut, "based on", input$tickersFrom))
+                 x="Sector")
             
         
     })
