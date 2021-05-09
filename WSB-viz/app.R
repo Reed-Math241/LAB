@@ -25,6 +25,7 @@ data <- read_csv("www/wsb_dd_submissions.csv") %>%
 
 tickers <- read_csv("www/tickers.csv")
 
+max_date <- as.Date(max(data$created_utc))
 ###########
 #Functions#
 ###########
@@ -109,9 +110,9 @@ ui <- fluidPage(
                                 dateRangeInput("clusterCreateRange",
                                                "Created Range:",
                                                min = "2018-01-01",
-                                               max = "2021-12-31",
+                                               max = max_date,
                                                start = "2021-04-04",
-                                               end = "2021-05-04"),
+                                               end = max_date),
                                 numericInput('clusters', 
                                              'Cluster count', 
                                              4, 
@@ -134,9 +135,9 @@ ui <- fluidPage(
                                 dateRangeInput("barCreateRange",
                                                "Created Range:",
                                                min = "2018-01-01",
-                                               max = "2021-12-31",
+                                               max = max_date,
                                                start = "2021-04-29",
-                                               end = "2021-05-04"),
+                                               end = max_date),
                                 submitButton("Change Output")
                             ), #end sidebar panel
                             mainPanel(
@@ -153,9 +154,9 @@ ui <- fluidPage(
                                 dateRangeInput("cloudCreateRange",
                                                "Created Range:",
                                                min = "2018-01-01",
-                                               max = "2021-12-31",
+                                               max = max_date,
                                                start = "2021-03-28",
-                                               end = "2021-04-29"),
+                                               end = max_date),
                                 submitButton("Change Range"),
                                 selectizeInput("StockTicker",
                                                "Stock Ticker: ",
@@ -183,9 +184,9 @@ ui <- fluidPage(
                                 dateRangeInput("sectorCreateRange",
                                                "Created Range:",
                                                min = "2018-01-01",
-                                               max = "2021-12-31",
+                                               max = max_date,
                                                start = "2021-04-01",
-                                               end = "2021-04-29"),
+                                               end = max_date),
                                 selectInput("tickersFrom",
                                              "Tickers from: ",
                                             c("Selftext" = "post_stocks",
@@ -227,9 +228,9 @@ ui <- fluidPage(
                                 dateRangeInput("createRange",
                                                "Created Range:",
                                                min = "2018-01-01",
-                                               max = "2021-12-31",
+                                               max = max_date,
                                                start = "2018-08-02",
-                                               end = "2021-12-31"),
+                                               end = max_date),
                                 selectizeInput("titleStocks",
                                                "Title Stocks: ",
                                                choices = NULL,
@@ -392,8 +393,8 @@ server <- function(input, output, session) {
     # bar Server
     bar_data <- reactive({
         clean_data <- data %>%
-            filter(created_utc >= as.Date(input$clusterCreateRange[1]),
-                   created_utc <= as.Date(input$clusterCreateRange[2])) %>%
+            filter(created_utc >= as.Date(input$barCreateRange[1]),
+                   created_utc <= as.Date(input$barCreateRange[2])) %>%
             mutate(ticker=strsplit(title_stocks, " ")) %>% 
             unnest(ticker) %>% 
             drop_na(ticker) %>%
@@ -407,10 +408,11 @@ server <- function(input, output, session) {
         bar_data() %>%
             ggplot(aes(x = reorder(ticker, -count), y = count, fill = count)) + 
             geom_col() +
+            labs(x = "Top 10 Stock Tickers") +
             theme_minimal() 
     })
     # End bar Server
-
+    # Sector Server
     output$sector_graph <- renderPlot({
         data %>%
             filter(created_utc >= as.Date(input$sectorCreateRange[1]),
@@ -425,7 +427,7 @@ server <- function(input, output, session) {
             
         
     })
-    
+    # End of Sector Server
     cloud_data <- reactive({
         clean_data <- data %>%
             filter(created_utc >= as.Date(input$cloudCreateRange[1]),
