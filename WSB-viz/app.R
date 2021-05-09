@@ -265,11 +265,8 @@ ui <- fluidPage(
                         ) #End sidebarLayout
                ), # End table page
                tabPanel(
-<<<<<<< HEAD
                    "Relevant Information",
-=======
-                   "Related Information",
->>>>>>> 3d2ecf84b15de58dde7ab849cab67c1e217d740b
+
                    tags$p(h3("Developers")),
                    tags$p(
                        "This app was created by",
