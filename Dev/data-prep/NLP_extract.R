@@ -83,21 +83,23 @@ write_csv(wsb, "WSB-viz/www/wsb_dd_submissions.csv") # Writes to shiny
 # Ticker Prep
 #########################
 
+# Supposed to reduce the payload, currently not fuctioning
+
 merged_common <- read_csv("Dev/data-prep/merged_common.csv")
 write_csv(merged_common, "WSB-viz/www/tickers.csv")
 
-titles <- wsb$title_stocks
-stocks <- c(wsb$title_stocks, wsb$post_stocks)
-
-stocks <- stocks[!is.na(stocks)]
-
-stocks <- paste(stocks, sep = " ")
-
-stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
-
-stocks <- unlist(unique(stocks))
-
-merged_common <- merged_common[!is.na(match(merged_common$Symbol, stocks)), ]
+# titles <- wsb$title_stocks
+# stocks <- c(wsb$title_stocks, wsb$post_stocks)
+# 
+# stocks <- stocks[!is.na(stocks)]
+# 
+# stocks <- paste(stocks, sep = " ")
+# 
+# stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
+# 
+# stocks <- unlist(unique(stocks))
+# 
+# merged_common <- merged_common[!is.na(match(merged_common$Symbol, stocks)), ]
 
 #write_csv(merged_common, "WSB-viz/www/tickers.csv")
 
