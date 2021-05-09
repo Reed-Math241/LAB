@@ -161,14 +161,14 @@ ui <- fluidPage(
                                                "Stock Ticker: ",
                                                choices = NULL,
                                                multiple = FALSE),
-                                submitButton("Change Output"),
                                 hr(),
                                 sliderInput("freq",
                                             "Minimum Frequency:",
                                             min = 1,  max = 20, value = 1),
                                 sliderInput("max",
                                             "Maximum Number of Words:",
-                                            min = 1,  max = 50,  value = 50)
+                                            min = 1,  max = 50,  value = 50),
+                                submitButton("Change Output")
                             ), #end sidebar panel
                             mainPanel(
                                 uiOutput("plotOrPrint")
