@@ -1,0 +1,13 @@
+name: WSB-viz
+title: WSB-viz
+username:
+account: jialicatherine
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4102334
+bundleId: 4576083
+url: https://jialicatherine.shinyapps.io/WSB-viz/
+when: 1620536307.57266
+lastSyncTime: 1620536307.57269
+asMultiple: FALSE
+asStatic: FALSE
