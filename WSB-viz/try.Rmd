@@ -64,7 +64,23 @@ library(viridis)
 library(wordcloud) 
 library(tidytext)
 
+
+
+######
+#Data#
+######
+
+#Section to read in data
+
+data <- read_csv("www/wsb_dd_submissions.csv") %>%
+    mutate(created_utc = strptime(created_utc, format="%s"))
+
 tickers <- read_csv("www/tickers.csv")
+
+###########
+#Functions#
+###########
+
 
 # clustering plot helper function
 count_and_sent <- function(df){
@@ -95,20 +111,25 @@ get_top10 <- function(df){
     return(top10)
 }
 
-######
-#Data#
-######
 
-#Section to read in data
+pivot_sector <- function(df, input_col, output_col){
+    df <- df %>%
+        select(input_col, output_col) #grabs two target columns
+    df <- df[!(is.na(df[[input_col]]) | df[[input_col]]==""), ] #removes empty rows
+    df <- separate_rows(df, `input_col`, sep=" ") # seperates out if multiple stocks
+    
+    stocks <- str_c("\\b", tickers$Symbol, "\\b", collapse="|") #makes a regex of all stocks
+    
+    df$sector <- str_replace_all(df[[input_col]], stocks, ticker_to_field) #replaces stocks with sectors
+    
+    
+    return(df[c("sector", output_col)]) #returns target and sector
+}
 
-data <- read_csv("www/wsb_dd_submissions.csv") 
 
-tickers <- read_csv("www/tickers.csv")
-
-###########
-#Functions#
-###########
-
+#############
+#Application#
+#############
 
 ui <- fluidPage(
     
@@ -122,20 +143,21 @@ ui <- fluidPage(
     
     
     # Application title
-    navbarPage("WSB DD dashboard: [PUN HERE]",
+
+    navbarPage("WSB DD dashboard: STONKS ONLY GO UP",
                tabPanel("Stock Sentiment",
-                        titlePanel("Stocks Sentiment Clustering"),
+                        titlePanel("Stocks Sentiment Cluster"),
                         sidebarLayout(
                             sidebarPanel(
                                 dateRangeInput("clusterCreateRange",
                                                "Created Range:",
                                                min = "2018-01-01",
                                                max = "2021-12-31",
-                                               start = "2021-04-29",
+                                               start = "2021-04-04",
                                                end = "2021-05-04"),
                                 numericInput('clusters', 
                                              'Cluster count', 
-                                             3, 
+                                             4, 
                                              min = 1, 
                                              max = 9),
                                 submitButton("Change Output")
@@ -168,23 +190,61 @@ ui <- fluidPage(
                
                # word cloud plot page
                tabPanel("Word Cloud",
-                        titlePanel("Key Words Related to a Stock"),
+                        titlePanel("Stock Key Words"),
                         sidebarLayout(
                             sidebarPanel(
-                                dateRangeInput("barCreateRange",
+                                dateRangeInput("cloudCreateRange",
                                                "Created Range:",
                                                min = "2018-01-01",
                                                max = "2021-12-31",
-                                               start = "2020-04-29",
+                                               start = "2021-03-28",
                                                end = "2021-04-29"),
+                                submitButton("Change Range"),
                                 selectizeInput("StockTicker",
                                                "Stock Ticker: ",
                                                choices = NULL,
                                                multiple = FALSE),
-                                submitButton("Change Output")
+                                submitButton("Change Output"),
+                                hr(),
+                                sliderInput("freq",
+                                            "Minimum Frequency:",
+                                            min = 1,  max = 20, value = 1),
+                                sliderInput("max",
+                                            "Maximum Number of Words:",
+                                            min = 1,  max = 50,  value = 50)
                             ), #end sidebar panel
                             mainPanel(
-                                plotOutput("cloud_graph")
+                                uiOutput("plotOrPrint")
+                            )
+                        ) # end Sidebar layou
+               ), #end word cloud plot panel
+               
+               tabPanel("Sector Sentiment",
+                        titlePanel("Sector Sentiment"),
+                        sidebarLayout(
+                            sidebarPanel(
+                                dateRangeInput("sectorCreateRange",
+                                               "Created Range:",
+                                               min = "2018-01-01",
+                                               max = "2021-12-31",
+                                               start = "2021-01-01",
+                                               end = "2021-04-29"),
+                                selectInput("tickersFrom",
+                                             "Tickers from: ",
+                                            c("Selftext" = "post_stocks",
+                                              "Title" = "title_stocks"),
+                                            selected = "title_stocks"),
+                                selectInput("sentimentOut",
+                                            "Sentiment based on: ",
+                                            c("Title Sentiment" = "title_sentiment", 
+                                              "Post Sentiment" = "post_sentiment", 
+                                              "Score" = "score", 
+                                              "Number of Comments" = "num_comments", 
+                                              "Number of Awards" = "count_awards"),
+                                            selected = "title_sentiment")
+                            ), #end sidebar panel
+                            mainPanel(
+                                plotOutput("sector_graph")
                             )
                         ) # end Sidebar layou
                ), #end word cloud plot panel
@@ -284,10 +344,10 @@ ui <- fluidPage(
 server <- function(input, output, session) {
     # Table server
     updateSelectizeInput(session, 'titleStocks', 
-                         choices = unique(tickers$Symbol), 
+                         choices = tickers$Symbol, 
                          server = TRUE)
     updateSelectizeInput(session, 'postStocks', 
-                         choices = unique(tickers$Symbol), 
+                         choices = tickers$Symbol, 
                          server = TRUE)
     updateSelectizeInput(session, 'author', 
                          choices = unique(data$author), 
@@ -295,8 +355,7 @@ server <- function(input, output, session) {
     
     table_clean <- reactive({
         filtered <- data %>%
-            subset(select=-c(permalink, coin_awards, num_comments)) %>%
-            mutate(created_utc = strptime(created_utc, format="%s"))
+            subset(select=-c(permalink, coin_awards, num_comments))
         
         if(length(input$titleStocks)>0){ #filters title stocks
             input_regex_clean <- str_c("\\b", input$titleStocks, "\\b")
@@ -343,7 +402,6 @@ server <- function(input, output, session) {
     # Sentiment server
     cluster_clean <- reactive({
         clean_data <- data %>%
-            mutate(created_utc = strptime(created_utc, format="%s")) %>%
             filter(created_utc >= as.Date(input$clusterCreateRange[1]),
                    created_utc <= as.Date(input$clusterCreateRange[2]),
                    title_sentiment!=0) %>%
@@ -376,7 +434,6 @@ server <- function(input, output, session) {
     # bar Server
     bar_data <- reactive({
         clean_data <- data %>%
-            mutate(created_utc = strptime(created_utc, format="%s")) %>%
             filter(created_utc >= as.Date(input$clusterCreateRange[1]),
                    created_utc <= as.Date(input$clusterCreateRange[2])) %>%
             mutate(ticker=strsplit(title_stocks, " ")) %>% 
@@ -397,37 +454,59 @@ server <- function(input, output, session) {
     # End bar Server
 
     # Word Cloud Server
+#    updateSelectizeInput(session, 'StockTicker',
+#                         choices = (unique(tickers$Symbol)),
+#                        server = TRUE)
+    
     cloud_data <- reactive({
         clean_data <- data %>%
-            mutate(created_utc = strptime(created_utc, format="%s")) %>%
-            filter(created_utc >= as.Date(input$clusterCreateRange[1]),
-                   created_utc <= as.Date(input$clusterCreateRange[2])) %>%
-            select(title_stocks, selftext, created_utc) %>%
+            filter(created_utc >= as.Date(input$cloudCreateRange[1]),
+                   created_utc <= as.Date(input$cloudCreateRange[2]),
+                   !is.na(post_stocks)) %>%
+            mutate(ticker=strsplit(title_stocks, " ")) %>% 
+            unnest(ticker) %>% 
+            select(ticker, selftext, created_utc) %>%
             drop_na() %>%
             unnest_tokens(word, selftext) %>%
-            filter(word != "https"& word != "removed" & word != "amp" & word != "png" ) %>%
+            filter(word != "https"& word != "removed" & word != "amp" & word != "png" & word != "jpg" & word != "pjpg" & word != "preview.redd.it" & word != "webp" & word != "auto" & word != "width" & word != "format" & word != "auto") %>%
             mutate(TF = grepl("\\d",word)) %>%
             filter(TF != TRUE)
-        
-        updateSelectizeInput(session, 'StockTicker',
-                             choices = clean_data$title_stocks,
-                             server = TRUE)
-        
-        clean_data <- clean_data %>%
-          filter(title_stocks == input$StockTicker) %>%
+        return(clean_data)
+    }) # end cloud clean
+    
+    observeEvent(input$cloudCreateRange, {
+      updateSelectizeInput(session, 'StockTicker',
+                         choices = as.character(unique(cloud_data()$ticker)),
+                         server = TRUE)
+    })
+    
+    cloud_data2 <- reactive({
+        clean_data <- cloud_data() %>%
+          filter(ticker == input$StockTicker) %>%
           anti_join(stop_words, by = c("word" = "word")) %>%
           count(word) %>%
           arrange(desc(n)) %>%
-          slice(1:100)
-        
+          slice(1:50)
         return(as.data.frame(clean_data))
     }) # end cloud clean
     
-    output$cloud_graph <- renderPlot({
-            wordcloud(words=cloud_data()$word,
-                  freq = cloud_data()$n,
-                  min.freq = 20, max.words=10, random.order=FALSE,
-                  rot.per=0.2, colors=brewer.pal(5, "Dark2"))
+    output$IPLMatchPlot <- renderPlot({        
+      wordcloud(words=cloud_data2()$word,
+                freq = cloud_data2()$n,
+                min.freq = input$freq, max.words=input$max, random.order=FALSE,
+                rot.per=0.2, colors=brewer.pal(5, "Dark2"), scale=c(4,0.1))
+    })
+    
+    output$IPLMatchPrint <- renderText({        
+      "Please select a date range and an interested stock ticker.\nClick Change buttons to update!"
+    })
+    
+    output$plotOrPrint <- renderUI({
+      if (nrow(cloud_data2()) == 0) {
+        verbatimTextOutput("IPLMatchPrint")
+      } else {
+        plotOutput("IPLMatchPlot")
+      }
     })
     # End Word Cloud Server
 }

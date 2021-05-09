@@ -152,10 +152,17 @@ ui <- fluidPage(
                                                "Stock Ticker: ",
                                                choices = NULL,
                                                multiple = FALSE),
-                                submitButton("Change Output")
+                                submitButton("Change Output"),
+                                hr(),
+                                sliderInput("freq",
+                                            "Minimum Frequency:",
+                                            min = 1,  max = 20, value = 1),
+                                sliderInput("max",
+                                            "Maximum Number of Words:",
+                                            min = 1,  max = 50,  value = 50)
                             ), #end sidebar panel
                             mainPanel(
-                                plotOutput("cloud_graph")
+                                uiOutput("plotOrPrint")
                             )
                         ) # end Sidebar layou
                ), #end word cloud plot panel
@@ -431,11 +438,23 @@ server <- function(input, output, session) {
         return(as.data.frame(clean_data))
     }) # end cloud clean
     
-    output$cloud_graph <- renderPlot({
-            wordcloud(words=cloud_data2()$word,
-                  freq = cloud_data2()$n,
-                  min.freq = 1, max.words=50, random.order=FALSE,
-                  rot.per=0.2, colors=brewer.pal(5, "Dark2"), scale=c(3,0.01))
+    output$IPLMatchPlot <- renderPlot({        
+      wordcloud(words=cloud_data2()$word,
+                freq = cloud_data2()$n,
+                min.freq = input$freq, max.words=input$max, random.order=FALSE,
+                rot.per=0.2, colors=brewer.pal(5, "Dark2"), scale=c(4,0.1))
+    })
+    
+    output$IPLMatchPrint <- renderText({        
+      "Please select a date range and an interested stock ticker.\nClick Change buttons to update!"
+    })
+    
+    output$plotOrPrint <- renderUI({
+      if (nrow(cloud_data2()) == 0) {
+        verbatimTextOutput("IPLMatchPrint")
+      } else {
+        plotOutput("IPLMatchPlot")
+      }
     })
     # End Word Cloud Server
 }
