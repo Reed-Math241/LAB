@@ -11,6 +11,8 @@ library(ggrepel)
 library(viridis)
 library(wordcloud) 
 library(tidytext)
+library(factoextra)
+library(cluster)
 
 
 
@@ -288,28 +290,33 @@ ui <- fluidPage(
                        tags$a("r/wallstreetbets Due Diligence(DD),",
                               href = "https://www.reddit.com/r/wallstreetbets/?f=flair_name%3A%22DD%22",
                               target = "_blank"),
-                       "and tools were used from packages such as",
+                       "and new packages were used are",
                        tags$code("bslib"),
                        ", ",
-                       tags$code("wordcloud"),
+                       tags$code("cluster"),
                        ", and",
-                       tags$code("tidyverse"),
-                       "."  ),
+                       tags$code("stats"),
+                       ".", " The new components are k_mean clustering analysis using "  ,tags$code("stats"), " package, and we also used new Rshiny functions such as observeEvent and renderUI."  ),
                    tags$p("The app was last updated on", max_date, ". This data will be updated monthly."
                    ),
                    tags$p(h3("Catalog")),
                    tags$p(h5("Stock sentiment k- mean cluster"), " 
 These stock clusters composed of points show how similar negative or positive sentiment they have to each other through partitioning the number of observation into k number of clusters . This is achieved through package(cluster) and using k-mean function. "
                    ),
+                   tags$p(strong("Possible Questions: "), ("Which stocks would be in the same cluster according to the stock sentiment and the mentions in a (give a date range)?")),
                    tags$p(h5("Popular Stocks"), " 
 The bar graph displays most discussed top10 stocks  in r/wallstreetbets in the given time range"),
+                   tags$p(strong("Possible Questions: "), ("What are the top 3 most discussed stocks in March 2021?")),
                    tags$p(h5("Word Cloud "), " 
 For a certain stock, it allows visualization of keywords that are associated with that stock on the r/wallstreetbets DD posts."),
-                   tags$p(h5("Sector Sentiment"), " 
+                   tags$p(strong("Possible Questions: "), ("According to the post keywords mentioned related to your chosen stock, do you think you should buy the  chosen stock?")),
+                   tags$p(h5("Sector Sentiment")," 
 This visualizes sentiments of thirteen sectors , which can be filtered by the body or the title of the post. "),
+                   tags$p(strong("Possible Questions: "), ("What sector out of the given 13 sectors has the highest (most positive) sentiment on March 2021?")),
                    tags$p(h5("Table"), " 
 If you want to know more details about the entire DD posts without going through the hassle of leaving the dashboard. The table tells you about the title, body, author, date of creation, upvotes, number of awards,
 ")
+                   
                    
                )
                
