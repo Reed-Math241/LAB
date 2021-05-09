@@ -30,56 +30,49 @@ merged_common <- read_csv("Dev/data-prep/merged_common.csv")
 # Field plot
 
 ```{r}
+library(tidyverse)
 
 ticker_to_field <- function(ticker){
-  sector <- match(ticker, merged_common$Symbol)
-  sector <- merged_common$Sector[sector]
-  if (is.na(sector)){
-    return("Other")
-  }
-  return(sector)
+    sector <- match(ticker, tickers$Symbol, nomatch = -1)
+    if (sector==-1||is.na(tickers$Sector[sector])){
+        return("Other")
+    }
+    return(tickers$Sector[sector])
 }
 
-replace_field <- function(df){
-  # input_col <- enquos(input_col)
-  # output_col <- enquos(output_col)
-  
-  df <- df %>%
-    select(title_stocks, score)
-  df <- df[!(is.na(df$title_stocks) | df$title_stocks==""), ]
-  df <- separate_rows(df, title_stocks, sep=" ")
-  
-  # stocks <- df$input_col[!is.na(df$input_col)]
-  # stocks <- paste(stocks, sep = " ")
-  # stocks <- as.list(unlist(strsplit(stocks, '[[:space:]]')))
-  # stocks <- unique(unlist(stocks)) #unique list of stocks
-  
-
-  stocks <- str_c("\\b", merged_common$Symbol, "\\b", collapse="|")
-  
-  df$sector <- str_replace_all(df$title_stocks, stocks, ticker_to_field)
-  df <- df %>%
-    select(-title_stocks)
-
-
-  return(df)
+pivot_sector <- function(df, input_col, output_col){
+    df <- df[c(input_col, output_col)]
+    df <- df[!(is.na(df[[input_col]]) | df[[input_col]]==""), ] #removes empty rows
+    df <- separate_rows(df, `input_col`, sep=" ") # seperates out if multiple stocks
+    
+    stocks <- str_c("\\b", tickers$Symbol, "\\b", collapse="|") #makes a regex of all stocks
+    print(df[[input_col]])
+    
+    df$sector <- str_replace_all(df[[input_col]], stocks, ticker_to_field) #replaces stocks with sectors
+    print(df[["sector"]])
+    return(df[c("sector", output_col)]) #returns target and sector
 }
 
-
-test <- replace_field(head(wsb_dd_submissions, 1000))#, title_stocks, score)
 
 ```
 
 ```{r}
-#test <- replace_field(head(wsb_dd_submissions, 1000))
+
+input_is <- "title_stocks"
+
+sentiment_is <-"score"
 
 wsb_dd_submissions %>%
-  sample_n(1000) %>%
-  replace_field(title_stocks, score) %>%
-ggplot(aes(x=reorder(sector, score, FUN = mean), y=score)) +
-  coord_flip() +
-  geom_boxplot(outlier.shape=NA) +
-  geom_jitter(width = 0.25, alpha = 0.1)
+            # filter(created_utc >= as.Date(input$sectorCreateRange[1]),
+            #        created_utc <= as.Date(input$sectorCreateRange[2])) %>%
+  sample_n(5000) %>%
+            pivot_sector(input_is, sentiment_is) %>%
+            ggplot(aes_string(x="sector", y=sentiment_is)) +
+            coord_flip() +
+            geom_boxplot() +
+            #geom_jitter(width = 0.25, alpha = 0.3) +
+            labs(y=sentiment_is, 
+                 x="Sector")
 
 
 ```
