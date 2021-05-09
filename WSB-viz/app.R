@@ -11,7 +11,6 @@ library(ggrepel)
 library(viridis)
 library(wordcloud) 
 library(tidytext)
-library(factoextra)
 library(cluster)
 
 
@@ -266,7 +265,7 @@ ui <- fluidPage(
                         ) #End sidebarLayout
                ), # End table page
                tabPanel(
-                   "Relative Information",
+                   "Relevant Information",
                    tags$p(h3("Developers")),
                    tags$p(
                        "This app was created by",
