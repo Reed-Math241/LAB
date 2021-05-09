@@ -249,7 +249,8 @@ ui <- fluidPage(
                                             sep=""),
                                 checkboxInput("onlySelftext",
                                               "Only posts with selftext",
-                                              FALSE)
+                                              FALSE),
+                                submitButton("Change Output")
                             ),
                             ##############
                             #Main panel DF
@@ -263,7 +264,8 @@ ui <- fluidPage(
                         ) #End sidebarLayout
                ), # End table page
                tabPanel(
-                   "Developers & Sources",
+                   "Relative Information",
+                   tags$p(h3("Developers")),
                    tags$p(
                        "This app was created by",
                        tags$a("Taylor Blair",
@@ -280,6 +282,7 @@ ui <- fluidPage(
                        "as a final project for Math 241: Data Science at Reed College in Spring 2021.
       The goal of this app is to allow Wall Street Bets enthusiasts to explore and visualize their stocks."
                    ),
+                   tags$p(h3("Sources and Packages")),
                    tags$p(
                        "The data used for this app was primarily pulled and scraped from Reddit subreddit",
                        tags$a("r/wallstreetbets Due Diligence(DD),",
@@ -291,8 +294,23 @@ ui <- fluidPage(
                        tags$code("wordcloud"),
                        ", and",
                        tags$code("tidyverse"),
-                       ".  The app was last updated in Spring 2021"
-                   )
+                       "."  ),
+                   tags$p("The app was last updated on", max_date, ". This data will be updated monthly."
+                   ),
+                   tags$p(h3("Catalog")),
+                   tags$p(h5("Stock sentiment k- mean cluster"), " 
+These stock clusters composed of points show how similar negative or positive sentiment they have to each other through partitioning the number of observation into k number of clusters . This is achieved through package(cluster) and using k-mean function. "
+                   ),
+                   tags$p(h5("Popular Stocks"), " 
+The bar graph displays most discussed top10 stocks  in r/wallstreetbets in the given time range"),
+                   tags$p(h5("Word Cloud "), " 
+For a certain stock, it allows visualization of keywords that are associated with that stock on the r/wallstreetbets DD posts."),
+                   tags$p(h5("Sector Sentiment"), " 
+This visualizes sentiments of thirteen sectors , which can be filtered by the body or the title of the post. "),
+                   tags$p(h5("Table"), " 
+If you want to know more details about the entire DD posts without going through the hassle of leaving the dashboard. The table tells you about the title, body, author, date of creation, upvotes, number of awards,
+")
+                   
                )
                
     ) # End navbar Page
@@ -348,7 +366,13 @@ server <- function(input, output, session) {
                    title_sentiment <= input$titleSentiment[2],
                    created_utc >= as.Date(input$createRange[1]),
                    created_utc <= as.Date(input$createRange[2])) %>%
-            mutate(created_utc = strftime(created_utc, format="%Y-%m-%d %H:%M:%S"))
+            mutate(created_utc = strftime(created_utc, format="%Y-%m-%d %H:%M:%S")) %>% 
+            rename(`Created UTC` = created_utc,
+                   `Count Awards` = count_awards,
+                   `Title Sentiment` = title_sentiment,
+                   `Post Sentiment` = post_sentiment,
+                   `Title Stocks` = title_stocks,
+                   `Post Stocks` = post_stocks)
         
         
         return(as.data.frame(filtered))
